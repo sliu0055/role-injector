@@ -274,4 +274,4 @@ if __name__ == "__main__":
 
     questions = load_medqa(args.num_questions, args.split)
     run_eval(questions, api_key, args.model, args.delay, args.output)
-    print("\nDone. Run: python eval/analyze.py eval/results.csv")
+    print("\nDone. Run: python eval/analyze_medqa.py eval/results.csv")

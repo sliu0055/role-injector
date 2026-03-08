@@ -137,12 +137,12 @@ Extraction logic (in priority order):
 ```
 eval/
   EXPERIMENT.md    — This file (experiment design)
-  run_eval.py      — Main script: load data → call Gemini → save CSV
-  analyze.py       — Read CSV → compute accuracy + statistical tests
+  run_medqa.py     — Main script: load MedQA → call Gemini → save CSV
+  analyze_medqa.py — Read CSV → compute accuracy + statistical tests
   results.csv      — Raw results (one row per question × condition)
 ```
 
-### run_eval.py behavior
+### run_medqa.py behavior
 
 1. Load MedQA test split via HuggingFace `datasets` library
 2. Sample N questions (default 200)
@@ -151,7 +151,7 @@ eval/
 5. Resume support: skip question/condition pairs already in CSV
 6. Rate limit: configurable delay (default 4.5s)
 
-### analyze.py behavior
+### analyze_medqa.py behavior
 
 1. Read results CSV
 2. Compute accuracy per condition
@@ -189,10 +189,10 @@ export GEMINI_API_KEY="your-key-here"
 
 ```bash
 # Default: 200 questions, gemini-2.5-flash, outputs to eval/results.csv
-python eval/run_eval.py
+python eval/run_medqa.py
 
 # Custom options
-python eval/run_eval.py --num-questions 50 --model gemini-2.5-flash --output eval/results.csv
+python eval/run_medqa.py --num-questions 50 --model gemini-2.5-flash --output eval/results.csv
 ```
 
 This takes ~45 minutes for 200 questions (600 API calls at 4.5s intervals).
@@ -202,7 +202,7 @@ This takes ~45 minutes for 200 questions (600 API calls at 4.5s intervals).
 ### Step 4: Analyze results
 
 ```bash
-python eval/analyze.py eval/results.csv
+python eval/analyze_medqa.py eval/results.csv
 ```
 
 This prints:
@@ -213,7 +213,7 @@ This prints:
 
 ### CLI reference
 
-**run_eval.py**
+**run_medqa.py**
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -223,10 +223,10 @@ This prints:
 | `--delay` | `4.5` | Seconds between API calls (free tier: 15 RPM) |
 | `--split` | `test` | HuggingFace dataset split |
 
-**analyze.py**
+**analyze_medqa.py**
 
 ```bash
-python eval/analyze.py <path-to-results.csv>
+python eval/analyze_medqa.py <path-to-results.csv>
 ```
 
 No flags — just pass the CSV path as the first argument.

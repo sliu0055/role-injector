@@ -1,11 +1,20 @@
 #!/usr/bin/env python3
 """
-run_eval.py — Evaluate role injection effectiveness on MedQA using Google Gemini.
+run_medqa.py — Evaluate role injection effectiveness on MedQA.
+
+Supports Google Gemini and Anthropic Claude as providers.
 
 Usage:
+    # Claude (recommended)
+    export ANTHROPIC_API_KEY="your-key"
+    python eval/run_medqa.py --provider claude --num-questions 200
+
+    # Gemini
     export GEMINI_API_KEY="your-key"
-    python eval/run_eval.py --num-questions 200 --output eval/results.csv
+    python eval/run_medqa.py --provider gemini --num-questions 200
 """
+
+from __future__ import annotations
 
 import argparse
 import csv
@@ -108,10 +117,44 @@ def load_medqa(num_questions: int, split: str = "test") -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# Gemini API
+# Provider: Anthropic Claude
 # ---------------------------------------------------------------------------
 
-def make_client(api_key: str):
+def make_claude_client(api_key: str):
+    """Create an Anthropic client."""
+    try:
+        import anthropic
+    except ImportError:
+        print("ERROR: pip install anthropic")
+        sys.exit(1)
+
+    return anthropic.Anthropic(api_key=api_key)
+
+
+def call_claude(
+    client,
+    prompt: str,
+    system_prompt: str | None,
+    model_name: str,
+) -> str:
+    """Call Claude API and return the text response."""
+    kwargs = {
+        "model": model_name,
+        "max_tokens": 50,
+        "messages": [{"role": "user", "content": prompt}],
+    }
+    if system_prompt:
+        kwargs["system"] = system_prompt
+
+    response = client.messages.create(**kwargs)
+    return response.content[0].text
+
+
+# ---------------------------------------------------------------------------
+# Provider: Google Gemini
+# ---------------------------------------------------------------------------
+
+def make_gemini_client(api_key: str):
     """Create a Gemini client."""
     try:
         from google import genai
@@ -141,6 +184,26 @@ def call_gemini(
         contents=prompt,
     )
     return response.text
+
+
+# ---------------------------------------------------------------------------
+# Provider dispatch
+# ---------------------------------------------------------------------------
+
+PROVIDERS = {
+    "claude": {
+        "make_client": make_claude_client,
+        "call": call_claude,
+        "env_key": "ANTHROPIC_API_KEY",
+        "default_model": "claude-haiku-4-5-20251001",
+    },
+    "gemini": {
+        "make_client": make_gemini_client,
+        "call": call_gemini,
+        "env_key": "GEMINI_API_KEY",
+        "default_model": "gemini-2.5-flash",
+    },
+}
 
 
 # ---------------------------------------------------------------------------
@@ -174,21 +237,25 @@ def load_completed(output_path: Path) -> tuple[set, list[dict]]:
 def run_eval(
     questions: list[dict],
     api_key: str,
+    provider_name: str,
     model_name: str,
     delay: float,
     output_path: str,
 ):
+    provider = PROVIDERS[provider_name]
     output_file = Path(output_path)
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     completed, existing_rows = load_completed(output_file)
-    client = make_client(api_key)
+    client = provider["make_client"](api_key)
+    call_fn = provider["call"]
 
     total_remaining = len(questions) * len(CONDITIONS) - len(completed)
     if total_remaining == 0:
-        print("All questions already evaluated. Use analyze.py to view results.")
+        print("All questions already evaluated. Use analyze_medqa.py to view results.")
         return
 
+    print(f"Provider: {provider_name} | Model: {model_name}")
     print(f"Running {total_remaining} API calls (~{total_remaining * delay / 60:.0f} min)...")
     done = 0
 
@@ -206,7 +273,7 @@ def run_eval(
                     continue
 
                 try:
-                    raw = call_gemini(client, prompt, system_prompt, model_name)
+                    raw = call_fn(client, prompt, system_prompt, model_name)
                 except Exception as e:
                     raw = f"ERROR: {e}"
 
@@ -245,20 +312,24 @@ def run_eval(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate role injection on MedQA")
     parser.add_argument(
+        "--provider", choices=["claude", "gemini"], default="claude",
+        help="API provider (default: claude)",
+    )
+    parser.add_argument(
         "--num-questions", type=int, default=200,
         help="Number of questions to evaluate (default: 200)",
     )
     parser.add_argument(
-        "--model", default="gemini-2.5-flash",
-        help="Gemini model name (default: gemini-2.5-flash)",
+        "--model", default=None,
+        help="Model name (default: provider-specific)",
     )
     parser.add_argument(
         "--output", default="eval/results.csv",
         help="Output CSV path (default: eval/results.csv)",
     )
     parser.add_argument(
-        "--delay", type=float, default=4.5,
-        help="Seconds between API calls (default: 4.5)",
+        "--delay", type=float, default=1.0,
+        help="Seconds between API calls (default: 1.0)",
     )
     parser.add_argument(
         "--split", default="test",
@@ -266,12 +337,15 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    api_key = os.environ.get("GEMINI_API_KEY")
+    provider = PROVIDERS[args.provider]
+    model_name = args.model or provider["default_model"]
+
+    api_key = os.environ.get(provider["env_key"])
     if not api_key:
-        print("ERROR: Set GEMINI_API_KEY environment variable.")
-        print("  export GEMINI_API_KEY='your-key'")
+        print(f"ERROR: Set {provider['env_key']} environment variable.")
+        print(f"  export {provider['env_key']}='your-key'")
         sys.exit(1)
 
     questions = load_medqa(args.num_questions, args.split)
-    run_eval(questions, api_key, args.model, args.delay, args.output)
+    run_eval(questions, api_key, args.provider, model_name, args.delay, args.output)
     print("\nDone. Run: python eval/analyze_medqa.py eval/results.csv")

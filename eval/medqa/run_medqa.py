@@ -374,8 +374,8 @@ if __name__ == "__main__":
         help="Model name (default: provider-specific)",
     )
     parser.add_argument(
-        "--output", default="eval/results.csv",
-        help="Output CSV path (default: eval/results.csv)",
+        "--output", default="eval/medqa/results.csv",
+        help="Output CSV path (default: eval/medqa/results.csv)",
     )
     parser.add_argument(
         "--delay", type=float, default=1.0,
@@ -402,4 +402,4 @@ if __name__ == "__main__":
 
     questions = load_medqa(args.num_questions, args.split, args.filter)
     run_eval(questions, api_key, args.provider, model_name, args.delay, args.output)
-    print("\nDone. Run: python eval/analyze_medqa.py eval/results.csv")
+    print("\nDone. Run: python eval/medqa/analyze_medqa.py eval/medqa/results.csv")

@@ -230,10 +230,13 @@ Extraction logic (in priority order):
 
 ```
 eval/
-  EXPERIMENT.md    — This file (experiment design + results)
-  run_medqa.py     — Main script: load MedQA → call LLM → save CSV
-  analyze_medqa.py — Read CSV → compute accuracy + statistical tests
-  results.csv      — Raw results (one row per question × condition)
+  medqa/
+    EXPERIMENT.md      — This file (experiment design + results)
+    run_medqa.py       — Main script: load MedQA → call LLM → save CSV
+    analyze_medqa.py   — Read CSV → compute accuracy + statistical tests
+    results.csv        — Raw results (one row per question × condition)
+    results_cardiology.csv — Cardiology-filtered results
+    discordant_cases.md — Detailed view of cases where role injection failed
 ```
 
 ### run_medqa.py behavior
@@ -292,13 +295,13 @@ export GEMINI_API_KEY="your-key-here"
 
 ```bash
 # Claude (default, recommended)
-python eval/run_medqa.py --provider claude --num-questions 200
+python eval/medqa/run_medqa.py --provider claude --num-questions 200
 
 # Gemini
-python eval/run_medqa.py --provider gemini --num-questions 200 --delay 4.5
+python eval/medqa/run_medqa.py --provider gemini --num-questions 200 --delay 4.5
 
 # Quick sanity check (any provider)
-python eval/run_medqa.py --provider claude --num-questions 5
+python eval/medqa/run_medqa.py --provider claude --num-questions 5
 ```
 
 **If the script is interrupted**, re-run the same command — it resumes from where it left off. Already-evaluated question/condition pairs are skipped.
@@ -306,7 +309,7 @@ python eval/run_medqa.py --provider claude --num-questions 5
 ### Step 4: Analyze results
 
 ```bash
-python eval/analyze_medqa.py eval/results.csv
+python eval/medqa/analyze_medqa.py eval/medqa/results.csv
 ```
 
 This prints:
@@ -324,7 +327,7 @@ This prints:
 | `--provider` | `claude` | API provider: `claude` or `gemini` |
 | `--num-questions` | `200` | Number of MedQA questions to evaluate |
 | `--model` | Provider default | Model name (e.g., `claude-haiku-4-5-20251001`) |
-| `--output` | `eval/results.csv` | Output CSV path |
+| `--output` | `eval/medqa/results.csv` | Output CSV path |
 | `--delay` | `1.0` | Seconds between API calls |
 | `--split` | `test` | HuggingFace dataset split |
 | `--filter` | `None` | Filter to domain (e.g., `cardiology`) |
@@ -332,7 +335,7 @@ This prints:
 **analyze_medqa.py**
 
 ```bash
-python eval/analyze_medqa.py <path-to-results.csv>
+python eval/medqa/analyze_medqa.py <path-to-results.csv>
 ```
 
 No flags — just pass the CSV path as the first argument.

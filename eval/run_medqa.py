@@ -75,10 +75,49 @@ def extract_answer(text: str) -> str | None:
 
 
 # ---------------------------------------------------------------------------
+# Domain filters
+# ---------------------------------------------------------------------------
+
+DOMAIN_FILTERS = {
+    "cardiology": {
+        "include": [
+            "cardiac", "myocardial", "coronary", "arrhythmia",
+            "atrial fibrillation", "atrial flutter", "ventricular fibrillation",
+            "ventricular tachycardia", "aortic stenosis", "aortic regurgitation",
+            "mitral stenosis", "mitral regurgitation", "mitral valve",
+            "tricuspid", "pericarditis", "endocarditis", "myocarditis",
+            "cardiomyopathy", "heart failure", "heart attack",
+            "angina", "infarction", "st elevation", "st depression",
+            "ejection fraction", "troponin", "echocardiogram",
+            "cardiac catheterization", "cardiac catherization",
+            "left ventricle", "right ventricle", "left atrium", "right atrium",
+            "heart murmur", "cardiac murmur", "heart block",
+            "cardiologist", "cardiology",
+        ],
+        "exclude": [
+            "cardiac arrest", "cerebral infarction", "brain infarct",
+            "splenic infarct", "renal infarct", "pulmonary infarct",
+        ],
+    },
+}
+
+
+def matches_filter(question_text: str, domain: str) -> bool:
+    """Check if a question matches a domain filter."""
+    filt = DOMAIN_FILTERS[domain]
+    text = question_text.lower()
+
+    if any(ex in text for ex in filt["exclude"]):
+        return False
+
+    return any(kw in text for kw in filt["include"])
+
+
+# ---------------------------------------------------------------------------
 # Dataset loading
 # ---------------------------------------------------------------------------
 
-def load_medqa(num_questions: int, split: str = "test") -> list[dict]:
+def load_medqa(num_questions: int, split: str = "test", domain_filter: str | None = None) -> list[dict]:
     """Load MedQA English 4-option questions from HuggingFace."""
     try:
         from datasets import load_dataset
@@ -94,9 +133,12 @@ def load_medqa(num_questions: int, split: str = "test") -> list[dict]:
         trust_remote_code=True,
     )
 
+    if domain_filter:
+        print(f"Filtering to domain: {domain_filter}")
+
     questions = []
     for i, row in enumerate(ds):
-        if i >= num_questions:
+        if len(questions) >= num_questions:
             break
 
         # options is list of {"key": "A", "value": "Ampicillin"}
@@ -104,6 +146,14 @@ def load_medqa(num_questions: int, split: str = "test") -> list[dict]:
         options_text = "\n".join(
             f"{opt['key']}) {opt['value']}" for opt in options_list
         )
+
+        # Apply domain filter if specified
+        if domain_filter:
+            full_text = row["question"] + " " + " ".join(
+                opt["value"] for opt in options_list
+            )
+            if not matches_filter(full_text, domain_filter):
+                continue
 
         questions.append({
             "id": i,
@@ -335,6 +385,10 @@ if __name__ == "__main__":
         "--split", default="test",
         help="Dataset split (default: test)",
     )
+    parser.add_argument(
+        "--filter", choices=list(DOMAIN_FILTERS.keys()), default=None,
+        help="Filter questions to a specific domain (e.g., cardiology)",
+    )
     args = parser.parse_args()
 
     provider = PROVIDERS[args.provider]
@@ -346,6 +400,6 @@ if __name__ == "__main__":
         print(f"  export {provider['env_key']}='your-key'")
         sys.exit(1)
 
-    questions = load_medqa(args.num_questions, args.split)
+    questions = load_medqa(args.num_questions, args.split, args.filter)
     run_eval(questions, api_key, args.provider, model_name, args.delay, args.output)
     print("\nDone. Run: python eval/analyze_medqa.py eval/results.csv")

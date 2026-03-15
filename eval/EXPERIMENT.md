@@ -12,8 +12,8 @@ This research aims to test four claims. The current implementation covers Claims
 
 | # | Claim | Status |
 |---|-------|--------|
-| 1 | Role injection improves accuracy over baseline | **Tested** — not supported (see results below) |
-| 2 | The specific role matters — a generic "be an expert" nudge is not equivalent | **Tested** — reversed: generic outperformed specific role |
+| 1 | Role injection improves accuracy over baseline | **Tested (Run 1 & 2)** — not supported. Neutral on broad MedQA, harmful on cardiology subset |
+| 2 | The specific role matters — a generic "be an expert" nudge is not equivalent | **Tested (Run 1 & 2)** — reversed: specific role performed worst in both runs |
 | 3 | Semantic retrieval (ChromaDB) picks better roles than keyword matching or random selection | Not yet implemented |
 | 4 | Usage-boosted scoring converges to better role selection over time | Not yet implemented |
 
@@ -72,6 +72,60 @@ The results match the interpretation guide row: **"Cond 2 ≈ Cond 3 > Cond 1"**
 Notably, the generic expert prompt ("You are a medical expert.") outperformed the specific cardiologist role. A likely explanation: MedQA covers all of medicine (anatomy, pharmacology, pathology, surgery, etc.), while the cardiologist prompt narrows the model's focus to cardiovascular topics. The specificity may hurt on non-cardiology questions.
 
 **This suggests a follow-up experiment**: filter MedQA to cardiology-related questions only, where the cardiologist role's specificity should be an advantage rather than a constraint.
+
+---
+
+## Results (Run 2 — Cardiology-filtered)
+
+**Model**: Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
+**Dataset**: MedQA English, 4-option, test split, filtered to cardiology-related questions (160 of 1,273)
+**Filter**: Keyword-based — questions containing cardiology terms (cardiac, myocardial, coronary, arrhythmia, heart failure, etc.) with exclusions for false positives (cardiac arrest, cerebral infarction, etc.)
+**Date**: 2026-03-15
+
+### Accuracy
+
+| Condition | Correct | Total | Accuracy | Parse Failures |
+|-----------|---------|-------|----------|----------------|
+| Baseline (no prompt) | 127 | 160 | 79.4% | 0 |
+| Role-injected (cardiologist) | 119 | 160 | 74.4% | 2 |
+| Generic expert | 123 | 160 | 76.9% | 0 |
+
+### Comparisons
+
+| Comparison | Delta | Significant? |
+|------------|-------|--------------|
+| Role-injected vs baseline | -5.0% | **Yes** (chi2=4.57, p<0.05) |
+| Generic expert vs baseline | -2.5% | **Yes** (chi2=4.00, p<0.05) |
+| Role-injected vs generic expert | -2.5% | No (chi2=1.60) |
+
+### Paired analysis (McNemar contingency)
+
+**Baseline vs role_injected** (n=160): Both correct: 116, only baseline: 11, only role_injected: 3, both wrong: 30. Statistically significant (p<0.05).
+
+**Baseline vs generic_expert** (n=160): Both correct: 123, only baseline: 4, only generic_expert: 0, both wrong: 33. Statistically significant (p<0.05).
+
+**Generic_expert vs role_injected** (n=160): Both correct: 116, only generic_expert: 7, only role_injected: 3, both wrong: 34. Not significant.
+
+### Interpretation
+
+Contrary to expectations, filtering to cardiology questions **worsened** the role injection effect. Both the detailed cardiologist role (-5.0%) and the generic expert prompt (-2.5%) **significantly reduced accuracy** compared to baseline.
+
+This is a strong negative result for Claims 1 and 2. Even when the role perfectly matches the question domain, role injection hurts rather than helps. The baseline (no system prompt) consistently performs best.
+
+**Possible explanations**:
+1. **Instruction overhead**: The system prompt adds constraints ("reference ACC/AHA guidelines", "flag red flags") that distract from directly answering the MC question. The model spends reasoning capacity on satisfying role instructions rather than selecting the correct answer.
+2. **Answer format conflict**: The role prompt encourages detailed clinical reasoning, which may conflict with the instruction to respond with only a letter. The 2 parse failures in the role-injected condition support this.
+3. **Haiku-specific**: A smaller model like Haiku may be more sensitive to system prompt overhead. Larger models (Sonnet, Opus) might handle the dual instruction better.
+4. **USMLE question style**: These are exam questions designed for medical students, not clinical consultations. The cardiologist persona frames answers as clinical advice, which may not align with the exam's expected reasoning style.
+
+### Summary across both runs
+
+| Run | Questions | Baseline | Role-injected | Generic expert | Winner |
+|-----|-----------|----------|---------------|----------------|--------|
+| Run 1 (all MedQA) | 200 | 79.5% | 80.5% | **83.0%** | Generic expert |
+| Run 2 (cardiology only) | 160 | **79.4%** | 74.4% | 76.9% | Baseline |
+
+**Conclusion so far**: On MedQA with Claude Haiku, role injection does not improve accuracy. The effect is either neutral (Run 1) or actively harmful (Run 2). Claim 1 is not supported. Claim 2 is reversed — the specific role performs worse than the generic nudge.
 
 ---
 
@@ -273,6 +327,7 @@ This prints:
 | `--output` | `eval/results.csv` | Output CSV path |
 | `--delay` | `1.0` | Seconds between API calls |
 | `--split` | `test` | HuggingFace dataset split |
+| `--filter` | `None` | Filter to domain (e.g., `cardiology`) |
 
 **analyze_medqa.py**
 

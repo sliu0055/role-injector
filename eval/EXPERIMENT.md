@@ -12,16 +12,16 @@ This research aims to test four claims. The current implementation covers Claims
 
 | # | Claim | Status |
 |---|-------|--------|
-| 1 | Role injection improves accuracy over baseline | **Implemented** — baseline vs role_injected conditions |
-| 2 | The specific role matters — a generic "be an expert" nudge is not equivalent | **Implemented** — generic_expert condition as control |
-| 3 | Semantic retrieval (ChromaDB) picks better roles than keyword matching or random selection | Not yet implemented — requires multiple indexed roles and a retrieval comparison harness |
-| 4 | Usage-boosted scoring converges to better role selection over time | Not yet implemented — requires usage simulation or longitudinal data collection |
+| 1 | Role injection improves accuracy over baseline | **Tested** — not supported (see results below) |
+| 2 | The specific role matters — a generic "be an expert" nudge is not equivalent | **Tested** — reversed: generic outperformed specific role |
+| 3 | Semantic retrieval (ChromaDB) picks better roles than keyword matching or random selection | Not yet implemented |
+| 4 | Usage-boosted scoring converges to better role selection over time | Not yet implemented |
 
 ### What each claim needs
 
-**Claim 1** (current): Compare accuracy of baseline (no prompt) vs role_injected (cardiologist prompt) on MedQA. If role_injected > baseline, claim holds.
+**Claim 1** (tested): Compare accuracy of baseline (no prompt) vs role_injected (cardiologist prompt) on MedQA. If role_injected > baseline, claim holds.
 
-**Claim 2** (current): Compare role_injected vs generic_expert ("You are a medical expert.") on MedQA. If role_injected > generic_expert, the detailed role adds value beyond a simple nudge. A wrong-domain condition (e.g., software architect prompt on medical questions) would further strengthen this claim.
+**Claim 2** (tested): Compare role_injected vs generic_expert ("You are a medical expert.") on MedQA. If role_injected > generic_expert, the detailed role adds value beyond a simple nudge. A wrong-domain condition (e.g., software architect prompt on medical questions) would further strengthen this claim.
 
 **Claim 3** (future): Index 15+ roles across multiple domains into ChromaDB. For each question, compare:
 - Role selected by semantic retrieval (ChromaDB `query_role.py`)
@@ -32,6 +32,46 @@ This research aims to test four claims. The current implementation covers Claims
 Measure accuracy under each retrieval strategy. If semantic retrieval yields the highest accuracy, claim holds.
 
 **Claim 4** (future): Simulate usage accumulation over a sequence of queries. Compare retrieval quality (top-1 accuracy of role selection) at the start (all usage_count = 0) vs after N queries with usage boosting. Alternatively, collect real usage data over time and measure whether frequently-used roles are retrieved more reliably for repeat query types.
+
+---
+
+## Results (Run 1)
+
+**Model**: Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
+**Dataset**: MedQA English, 4-option, test split, first 200 questions
+**Date**: 2026-03-15
+
+### Accuracy
+
+| Condition | Correct | Total | Accuracy | Parse Failures |
+|-----------|---------|-------|----------|----------------|
+| Baseline (no prompt) | 159 | 200 | 79.5% | 0 |
+| Role-injected (cardiologist) | 161 | 200 | 80.5% | 0 |
+| Generic expert | 166 | 200 | 83.0% | 0 |
+
+### Comparisons
+
+| Comparison | Delta | Significant? |
+|------------|-------|--------------|
+| Role-injected vs baseline | +1.0% | No (chi2=0.40) |
+| Generic expert vs baseline | +3.5% | **Yes** (chi2=7.00, p<0.05) |
+| Role-injected vs generic expert | -2.5% | No (chi2=2.27) |
+
+### Paired analysis (McNemar contingency)
+
+**Baseline vs role_injected** (n=200): Both correct: 155, only baseline: 4, only role_injected: 6, both wrong: 35. Not significant.
+
+**Baseline vs generic_expert** (n=200): Both correct: 159, only baseline: 0, only generic_expert: 7, both wrong: 34. Statistically significant (p<0.05).
+
+**Generic_expert vs role_injected** (n=200): Both correct: 158, only generic_expert: 8, only role_injected: 3, both wrong: 31. Not significant.
+
+### Interpretation
+
+The results match the interpretation guide row: **"Cond 2 ≈ Cond 3 > Cond 1"** — any expert nudge helps, but the detailed role adds no measurable value over a generic one.
+
+Notably, the generic expert prompt ("You are a medical expert.") outperformed the specific cardiologist role. A likely explanation: MedQA covers all of medicine (anatomy, pharmacology, pathology, surgery, etc.), while the cardiologist prompt narrows the model's focus to cardiovascular topics. The specificity may hurt on non-cardiology questions.
+
+**This suggests a follow-up experiment**: filter MedQA to cardiology-related questions only, where the cardiologist role's specificity should be an advantage rather than a constraint.
 
 ---
 
@@ -90,30 +130,30 @@ This is the critical control. It answers: **does the detailed role matter, or do
 
 ## Model
 
+The script supports two providers via the `--provider` flag.
+
+### Claude (recommended)
+
+| Property | Value |
+|----------|-------|
+| Provider | Anthropic |
+| Model | `claude-haiku-4-5-20251001` |
+| SDK | `anthropic` |
+| Cost | ~$0.25/1M input tokens (~$1 for full 1,273 questions) |
+| Delay | 1 second (generous rate limits) |
+
+### Gemini
+
 | Property | Value |
 |----------|-------|
 | Provider | Google Gemini (free tier) |
 | Model | `gemini-2.5-flash` |
-| SDK | `google-genai` (new unified SDK, not legacy `google-generativeai`) |
-| Rate limit (free) | ~15 RPM, ~1,500 RPD, ~1M TPM |
-| Delay between calls | 4.5 seconds (fits within 15 RPM) |
+| SDK | `google-genai` |
+| Cost | Free |
+| Rate limit | ~15 RPM, ~1,500 RPD |
+| Delay | 4.5 seconds (to fit within RPM limit) |
 
-### API call pattern
-
-```python
-from google import genai
-from google.genai import types
-
-client = genai.Client(api_key=API_KEY)
-
-response = client.models.generate_content(
-    model="gemini-2.5-flash",
-    config=types.GenerateContentConfig(
-        system_instruction="<system prompt or None>"
-    ),
-    contents="<question + options + answer instruction>"
-)
-```
+**Note**: The Gemini free tier throttled aggressively in our initial run (582/600 calls rate-limited). Claude is more reliable.
 
 ---
 
@@ -136,8 +176,8 @@ Extraction logic (in priority order):
 
 ```
 eval/
-  EXPERIMENT.md    — This file (experiment design)
-  run_medqa.py     — Main script: load MedQA → call Gemini → save CSV
+  EXPERIMENT.md    — This file (experiment design + results)
+  run_medqa.py     — Main script: load MedQA → call LLM → save CSV
   analyze_medqa.py — Read CSV → compute accuracy + statistical tests
   results.csv      — Raw results (one row per question × condition)
 ```
@@ -149,13 +189,14 @@ eval/
 3. For each question, run all 3 conditions sequentially
 4. Write each result row to CSV immediately (crash-safe, resume-safe)
 5. Resume support: skip question/condition pairs already in CSV
-6. Rate limit: configurable delay (default 4.5s)
+6. Rate limit: configurable delay (default 1.0s for Claude, 4.5s for Gemini)
 
 ### analyze_medqa.py behavior
 
 1. Read results CSV
 2. Compute accuracy per condition
 3. Print summary table with deltas between conditions
+4. McNemar's chi-squared test for paired statistical significance
 
 ---
 
@@ -163,8 +204,8 @@ eval/
 
 ### Prerequisites
 
-- Python 3.10+
-- A Google Gemini API key (free) from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+- Python 3.9+
+- An API key: Anthropic (recommended) or Google Gemini (free)
 
 ### Step 1: Install dependencies
 
@@ -176,26 +217,35 @@ pip install -r requirements.txt
 Or install just the eval dependencies:
 
 ```bash
+# For Claude
+pip install datasets anthropic
+
+# For Gemini
 pip install datasets google-genai
 ```
 
 ### Step 2: Set your API key
 
 ```bash
+# Claude
+export ANTHROPIC_API_KEY="your-key-here"
+
+# Or Gemini
 export GEMINI_API_KEY="your-key-here"
 ```
 
 ### Step 3: Run the evaluation
 
 ```bash
-# Default: 200 questions, gemini-2.5-flash, outputs to eval/results.csv
-python eval/run_medqa.py
+# Claude (default, recommended)
+python eval/run_medqa.py --provider claude --num-questions 200
 
-# Custom options
-python eval/run_medqa.py --num-questions 50 --model gemini-2.5-flash --output eval/results.csv
+# Gemini
+python eval/run_medqa.py --provider gemini --num-questions 200 --delay 4.5
+
+# Quick sanity check (any provider)
+python eval/run_medqa.py --provider claude --num-questions 5
 ```
-
-This takes ~45 minutes for 200 questions (600 API calls at 4.5s intervals).
 
 **If the script is interrupted**, re-run the same command — it resumes from where it left off. Already-evaluated question/condition pairs are skipped.
 
@@ -217,10 +267,11 @@ This prints:
 
 | Flag | Default | Description |
 |------|---------|-------------|
+| `--provider` | `claude` | API provider: `claude` or `gemini` |
 | `--num-questions` | `200` | Number of MedQA questions to evaluate |
-| `--model` | `gemini-2.5-flash` | Gemini model name |
+| `--model` | Provider default | Model name (e.g., `claude-haiku-4-5-20251001`) |
 | `--output` | `eval/results.csv` | Output CSV path |
-| `--delay` | `4.5` | Seconds between API calls (free tier: 15 RPM) |
+| `--delay` | `1.0` | Seconds between API calls |
 | `--split` | `test` | HuggingFace dataset split |
 
 **analyze_medqa.py**
@@ -235,6 +286,19 @@ No flags — just pass the CSV path as the first argument.
 
 ## Time and cost estimate
 
+### Claude (recommended)
+
+| Parameter | Value |
+|-----------|-------|
+| Questions | 200 |
+| Conditions | 3 |
+| Total API calls | 600 |
+| Delay per call | 1s |
+| Estimated runtime | ~10 minutes |
+| Cost | ~$0.10 |
+
+### Gemini (free)
+
 | Parameter | Value |
 |-----------|-------|
 | Questions | 200 |
@@ -242,9 +306,7 @@ No flags — just pass the CSV path as the first argument.
 | Total API calls | 600 |
 | Delay per call | 4.5s |
 | Estimated runtime | ~45 minutes |
-| Cost | Free (Gemini free tier) |
-
-To run faster, reduce `--delay` if your quota allows, or reduce `--num-questions` for a quick sanity check (e.g., `--num-questions 10` takes ~2 minutes).
+| Cost | Free (but may hit daily quota) |
 
 ---
 
@@ -253,17 +315,22 @@ To run faster, reduce `--delay` if your quota allows, or reduce `--num-questions
 | Package | Purpose |
 |---------|---------|
 | `datasets` | Load MedQA from HuggingFace |
-| `google-genai` | Call Gemini API (new unified SDK) |
+| `anthropic` | Call Claude API (recommended provider) |
+| `google-genai` | Call Gemini API (free alternative) |
 
 ---
 
 ## Future experiments
 
-### Strengthening Claims 1 & 2
+### Follow-up on Claims 1 & 2
 
-- **Wrong-domain condition (Claim 2)**: Add a 4th condition — inject software architect role on medical questions. If it performs worse than cardiologist but similar to baseline, this proves domain-specificity matters.
-- **Larger sample**: Scale from 200 to full 1,273 test questions once pilot results are promising.
-- **Multiple models**: Run same experiment on Haiku, Sonnet, Llama to test whether the effect generalizes across model sizes and providers.
+Based on Run 1 results, the cardiologist role may be too narrow for the broad MedQA dataset. Next steps:
+
+- **Filter to cardiology questions**: Subset MedQA to questions containing cardiovascular keywords (e.g., "heart", "cardiac", "arrhythmia", "ECG", "myocardial"). The cardiologist role should show a larger advantage on domain-matched questions.
+- **Wrong-domain condition (Claim 2)**: Add a 4th condition — inject software architect role on medical questions. If it performs worse than cardiologist and similar to or worse than baseline, this proves domain-specificity matters.
+- **Multiple medical roles**: Add a general practitioner role and compare against the cardiologist on broad MedQA. The GP role may outperform the specialist on general questions.
+- **Larger sample**: Scale from 200 to full 1,273 test questions.
+- **Multiple models**: Run same experiment on Sonnet, Opus, Gemini, Llama to test whether the effect generalizes across model sizes and providers.
 - **MMLU subsets**: Extend to `clinical_knowledge`, `medical_genetics`, `anatomy` for broader medical coverage.
 - **Cross-domain**: Add legal (MMLU `professional_law`) with legal roles to test whether findings hold outside medicine.
 

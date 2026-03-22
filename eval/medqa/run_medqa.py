@@ -26,17 +26,10 @@ from pathlib import Path
 
 
 # ---------------------------------------------------------------------------
-# Role prompts (from roles/medical/cardiologist.md → Prompt Template)
+# Role loading
 # ---------------------------------------------------------------------------
 
-ROLE_PROMPT = (
-    "You are a board-certified Cardiologist with 15 years of clinical experience. "
-    "You have deep expertise in heart disease, cardiac imaging, arrhythmias, and "
-    "cardiovascular risk management. When answering, systematically consider the "
-    "clinical picture, reference ACC/AHA guidelines where applicable, and clearly "
-    "flag any red flags or urgency signals. Note important caveats a non-specialist "
-    "might miss."
-)
+DEFAULT_ROLE_PATH = "roles/medical/cardiologist.md"
 
 GENERIC_PROMPT = "You are a medical expert."
 
@@ -45,11 +38,46 @@ ANSWER_INSTRUCTION = (
     "Do not include any explanation."
 )
 
-CONDITIONS = [
-    ("baseline", None),
-    ("role_injected", ROLE_PROMPT),
-    ("generic_expert", GENERIC_PROMPT),
-]
+
+def load_role_prompt(role_path: str) -> str:
+    """Read a role markdown file and extract the Prompt Template section."""
+    path = Path(role_path)
+    if not path.exists():
+        print(f"ERROR: Role file not found: {role_path}")
+        sys.exit(1)
+
+    content = path.read_text()
+
+    # Extract the Prompt Template section
+    marker = "## Prompt Template"
+    if marker in content:
+        prompt = content.split(marker, 1)[1].strip()
+        # Take only up to the next ## heading (if any)
+        if "\n## " in prompt:
+            prompt = prompt.split("\n## ", 1)[0].strip()
+        if prompt:
+            return prompt
+
+    # Fallback: use everything after the YAML frontmatter
+    if content.startswith("---"):
+        parts = content.split("---", 2)
+        if len(parts) >= 3:
+            return parts[2].strip()
+
+    return content.strip()
+
+
+def build_conditions(role_path: str) -> list[tuple[str, str | None]]:
+    """Build the 3 evaluation conditions using the specified role file."""
+    role_prompt = load_role_prompt(role_path)
+    role_name = Path(role_path).stem
+    print(f"Role: {role_name} ({role_path})")
+    print(f"Prompt: {role_prompt[:100]}...")
+    return [
+        ("baseline", None),
+        ("role_injected", role_prompt),
+        ("generic_expert", GENERIC_PROMPT),
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -291,6 +319,7 @@ def run_eval(
     model_name: str,
     delay: float,
     output_path: str,
+    conditions: list[tuple[str, str | None]] = None,
 ):
     provider = PROVIDERS[provider_name]
     output_file = Path(output_path)
@@ -300,7 +329,7 @@ def run_eval(
     client = provider["make_client"](api_key)
     call_fn = provider["call"]
 
-    total_remaining = len(questions) * len(CONDITIONS) - len(completed)
+    total_remaining = len(questions) * len(conditions) - len(completed)
     if total_remaining == 0:
         print("All questions already evaluated. Use analyze_medqa.py to view results.")
         return
@@ -318,7 +347,7 @@ def run_eval(
         for q in questions:
             prompt = f"{q['question']}\n\n{q['options']}{ANSWER_INSTRUCTION}"
 
-            for cond_name, system_prompt in CONDITIONS:
+            for cond_name, system_prompt in conditions:
                 if (q["id"], cond_name) in completed:
                     continue
 
@@ -389,6 +418,10 @@ if __name__ == "__main__":
         "--filter", choices=list(DOMAIN_FILTERS.keys()), default=None,
         help="Filter questions to a specific domain (e.g., cardiology)",
     )
+    parser.add_argument(
+        "--role", default=DEFAULT_ROLE_PATH,
+        help="Path to role markdown file (default: roles/medical/cardiologist.md)",
+    )
     args = parser.parse_args()
 
     provider = PROVIDERS[args.provider]
@@ -400,6 +433,7 @@ if __name__ == "__main__":
         print(f"  export {provider['env_key']}='your-key'")
         sys.exit(1)
 
+    conditions = build_conditions(args.role)
     questions = load_medqa(args.num_questions, args.split, args.filter)
-    run_eval(questions, api_key, args.provider, model_name, args.delay, args.output)
+    run_eval(questions, api_key, args.provider, model_name, args.delay, args.output, conditions)
     print("\nDone. Run: python eval/medqa/analyze_medqa.py eval/medqa/results.csv")

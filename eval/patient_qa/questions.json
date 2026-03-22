@@ -1,0 +1,152 @@
+[
+  {
+    "id": 1,
+    "domain": "cardiology",
+    "question": "Doctor, I've been having chest pain for the past three days that gets worse when I climb stairs. I'm 55 years old with high blood pressure. Should I be worried?"
+  },
+  {
+    "id": 2,
+    "domain": "cardiology",
+    "question": "My heart sometimes beats really fast and irregularly for a few minutes, then goes back to normal on its own. It's happened maybe five times in the last month. What could be causing this?"
+  },
+  {
+    "id": 3,
+    "domain": "cardiology",
+    "question": "I have high cholesterol and my doctor put me on statins six months ago. My LDL went from 180 to 120. Is that good enough, or should I aim lower?"
+  },
+  {
+    "id": 4,
+    "domain": "cardiology",
+    "question": "My father had a heart attack at 58. I'm 45 now and my blood pressure is usually around 135/85. What should I do to reduce my heart attack risk?"
+  },
+  {
+    "id": 5,
+    "domain": "cardiology",
+    "question": "I've been feeling short of breath when I lie flat at night and have to prop myself up with two pillows to sleep comfortably. What might be causing this?"
+  },
+  {
+    "id": 6,
+    "domain": "neurology",
+    "question": "I've been getting severe headaches on one side of my head about twice a month, often with nausea and sensitivity to light. They last about 6-8 hours. What are my options for treatment?"
+  },
+  {
+    "id": 7,
+    "domain": "neurology",
+    "question": "This morning I suddenly couldn't remember the word for common objects and my right hand felt tingly for about 20 minutes, then it went away. Should I go to the ER?"
+  },
+  {
+    "id": 8,
+    "domain": "neurology",
+    "question": "My hands tremble when I try to hold a cup of coffee, especially in the mornings. I'm 62. Is this just normal aging or could it be something more serious?"
+  },
+  {
+    "id": 9,
+    "domain": "gastroenterology",
+    "question": "I've had heartburn almost every day for the past two months and antacids only help for an hour or two. Could this be something serious, or is it just acid reflux?"
+  },
+  {
+    "id": 10,
+    "domain": "gastroenterology",
+    "question": "I noticed some blood in my stool last week. I'm 50 years old and have never had a colonoscopy. How urgently do I need to see a doctor?"
+  },
+  {
+    "id": 11,
+    "domain": "gastroenterology",
+    "question": "I've had alternating constipation and diarrhea for the past several months along with stomach cramping. My symptoms seem to get worse when I'm stressed. What could this be?"
+  },
+  {
+    "id": 12,
+    "domain": "endocrinology",
+    "question": "My fasting blood sugar came back at 118 mg/dL. My doctor said I'm pre-diabetic. What lifestyle changes can actually reverse this?"
+  },
+  {
+    "id": 13,
+    "domain": "endocrinology",
+    "question": "I've been feeling exhausted all the time, gaining weight despite not changing my diet, and feeling cold when others are warm. Could my thyroid be the problem?"
+  },
+  {
+    "id": 14,
+    "domain": "endocrinology",
+    "question": "I'm a type 2 diabetic on metformin. My A1C is 8.2% even though I've been watching my diet. My doctor mentioned adding another medication. What are my options and what are the pros and cons?"
+  },
+  {
+    "id": 15,
+    "domain": "respiratory",
+    "question": "I've had a dry cough that just won't go away for about six weeks. I don't smoke and I don't feel sick. What are the common causes of a persistent cough like this?"
+  },
+  {
+    "id": 16,
+    "domain": "respiratory",
+    "question": "I was recently diagnosed with asthma at age 35. I thought asthma was a childhood condition. Is adult-onset asthma different? What triggers should I watch out for?"
+  },
+  {
+    "id": 17,
+    "domain": "respiratory",
+    "question": "I have sleep apnea and was prescribed a CPAP machine but I find it really uncomfortable and I'm not using it consistently. What are the health risks if I just ignore the sleep apnea?"
+  },
+  {
+    "id": 18,
+    "domain": "musculoskeletal",
+    "question": "My knee has been swollen and painful for two weeks after a hiking trip. It hurts most going downstairs. I'm 48 years old. Is this something I should get checked out?"
+  },
+  {
+    "id": 19,
+    "domain": "musculoskeletal",
+    "question": "I've had lower back pain for about three months. It started after I moved furniture. Is there anything I can do at home, and when should I see a specialist?"
+  },
+  {
+    "id": 20,
+    "domain": "infectious_disease",
+    "question": "I've had a fever of 38.8°C (102°F), bad sore throat, and swollen glands for four days. My rapid strep test came back negative. What else could this be?"
+  },
+  {
+    "id": 21,
+    "domain": "infectious_disease",
+    "question": "I was bitten by a tick about two weeks ago and now I have a round red rash about 8 cm wide spreading from the bite site. Should I wait to see if it goes away or go in right away?"
+  },
+  {
+    "id": 22,
+    "domain": "mental_health",
+    "question": "I've been feeling sad, unmotivated, and sleeping too much for about two months. My appetite is also down. My doctor suggested antidepressants but I'm hesitant. What else should I consider?"
+  },
+  {
+    "id": 23,
+    "domain": "mental_health",
+    "question": "I've been having panic attacks — sudden racing heart, feeling like I can't breathe, and a sense of dread — about once a week. What causes them and how are they treated?"
+  },
+  {
+    "id": 24,
+    "domain": "dermatology",
+    "question": "I have a mole on my back that seems to have grown and darkened over the past few months. I'm 40 years old. How do I know if I should be worried about melanoma?"
+  },
+  {
+    "id": 25,
+    "domain": "nephrology",
+    "question": "My recent lab results showed my creatinine is 1.4 mg/dL and my GFR is 55. My doctor said my kidneys are not functioning at 100%. What does this mean and what should I do?"
+  },
+  {
+    "id": 26,
+    "domain": "hematology",
+    "question": "I've been feeling tired and my blood test showed my hemoglobin is 10.2 g/dL. My doctor said I'm anemic. What are the different types of anemia and how do I know which one I have?"
+  },
+  {
+    "id": 27,
+    "domain": "general",
+    "question": "I'm 60 years old and haven't seen a doctor in five years. What routine screenings and tests should I be getting at my age?"
+  },
+  {
+    "id": 28,
+    "domain": "general",
+    "question": "I've been taking ibuprofen almost daily for about a month for joint pain. Is this safe long-term, or are there risks I should know about?"
+  },
+  {
+    "id": 29,
+    "domain": "general",
+    "question": "My blood pressure was 148/92 at a pharmacy reading. I don't have a regular doctor. Should I be concerned, and what should my first steps be?"
+  },
+  {
+    "id": 30,
+    "domain": "general",
+    "question": "I want to lose about 15 kg. I've tried diets before but always regain the weight. What approaches actually have good evidence behind them for sustainable weight loss?"
+  }
+]

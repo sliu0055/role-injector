@@ -1,0 +1,20 @@
+
+============================================================
+JUDGE EVALUATION SUMMARY
+============================================================
+Questions evaluated: 30
+
+Condition             Avg Score  medical_  patient_  safety_g   clarity
+----------------------------------------------------------------------
+baseline                   3.88      4.13      3.67      3.37      4.33
+role_injected              4.61      4.80      4.77      4.83      4.03
+generic_expert             3.98      4.27      4.03      3.47      4.17
+
+Overall Winner Frequency
+----------------------------------------
+  baseline               1 wins (3%)
+  role_injected         27 wins (90%)
+  generic_expert         2 wins (7%)
+
+Judge results saved to: eval/patient_qa/judge_results.csv
+Summary saved to:       eval/patient_qa/judge_summary.txt

@@ -3,15 +3,20 @@
 run_medqa.py — Evaluate role injection effectiveness on MedQA.
 
 Supports Google Gemini and Anthropic Claude as providers.
+Supports hybrid role selection (ChromaDB shortlist + Gemini Flash picker).
 
 Usage:
-    # Claude (recommended)
+    # Basic (fixed role, Claude answerer)
     export ANTHROPIC_API_KEY="your-key"
     python eval/run_medqa.py --provider claude --num-questions 200
 
-    # Gemini
+    # With hybrid role selection (requires ChromaDB + Gemini)
+    export ANTHROPIC_API_KEY="your-key"
     export GEMINI_API_KEY="your-key"
-    python eval/run_medqa.py --provider gemini --num-questions 200
+    python eval/run_medqa.py --provider claude --add-hybrid --num-questions 200
+
+    # With embedding-only role selection
+    python eval/run_medqa.py --provider claude --add-embedding --num-questions 200
 """
 
 from __future__ import annotations
@@ -67,17 +72,121 @@ def load_role_prompt(role_path: str) -> str:
     return content.strip()
 
 
-def build_conditions(role_path: str) -> list[tuple[str, str | None]]:
-    """Build the 3 evaluation conditions using the specified role file."""
+def build_conditions(role_path: str) -> list[tuple[str, object]]:
+    """Build the base evaluation conditions using the specified role file."""
     role_prompt = load_role_prompt(role_path)
     role_name = Path(role_path).stem
     print(f"Role: {role_name} ({role_path})")
     print(f"Prompt: {role_prompt[:100]}...")
     return [
         ("baseline", None),
-        ("role_injected", role_prompt),
+        ("fixed_role", role_prompt),
         ("generic_expert", GENERIC_PROMPT),
     ]
+
+
+# ---------------------------------------------------------------------------
+# Role selection: embedding-only and hybrid
+# ---------------------------------------------------------------------------
+
+SELECTOR_MODEL = "gemini-2.5-flash"
+
+
+def init_chromadb(db_path: str):
+    """Initialize ChromaDB client and return the roles collection."""
+    try:
+        import chromadb
+        from chromadb.utils import embedding_functions
+    except ImportError:
+        print("ERROR: pip install chromadb sentence-transformers")
+        sys.exit(1)
+
+    if not Path(db_path).exists():
+        print(f"ERROR: ChromaDB not found at {db_path}. Run scripts/init_roledb.py first.")
+        sys.exit(1)
+
+    client = chromadb.PersistentClient(path=db_path)
+    ef = embedding_functions.SentenceTransformerEmbeddingFunction(
+        model_name="all-MiniLM-L6-v2"
+    )
+    collection = client.get_collection("roles", embedding_function=ef)
+    print(f"ChromaDB loaded: {collection.count()} roles indexed.")
+    return collection
+
+
+def get_embedding_candidates(collection, question: str, top_k: int = 5) -> list[dict]:
+    """Query ChromaDB for top-k matching roles."""
+    results = collection.query(
+        query_texts=[question],
+        n_results=min(top_k, collection.count()),
+        include=["metadatas", "distances"],
+    )
+    candidates = []
+    for role_id, metadata, distance in zip(
+        results["ids"][0], results["metadatas"][0], results["distances"][0]
+    ):
+        similarity = 1 - (distance / 2)
+        candidates.append({
+            "id": role_id,
+            "name": metadata.get("name", role_id),
+            "domain": metadata.get("domain", ""),
+            "subdomain": metadata.get("subdomain", ""),
+            "similarity": similarity,
+            "prompt_template": metadata.get("prompt_template", ""),
+        })
+    return candidates
+
+
+def make_embedding_selector(collection):
+    """Return a callable that picks the top-1 embedding match for a question."""
+    def select(question: str) -> tuple[str, str]:
+        candidates = get_embedding_candidates(collection, question, top_k=1)
+        if not candidates:
+            return GENERIC_PROMPT, "none"
+        best = candidates[0]
+        return best["prompt_template"], best["id"]
+    return select
+
+
+def make_hybrid_selector(collection, gemini_api_key: str):
+    """Return a callable that uses embedding shortlist + Gemini Flash to pick a role."""
+    gemini_client = make_gemini_client(gemini_api_key)
+
+    def select(question: str) -> tuple[str, str]:
+        candidates = get_embedding_candidates(collection, question, top_k=5)
+        if not candidates:
+            return GENERIC_PROMPT, "none"
+        if len(candidates) == 1:
+            return candidates[0]["prompt_template"], candidates[0]["id"]
+
+        # Build selector prompt
+        role_list = "\n".join(
+            f"{i+1}. {c['name']} ({c['subdomain']})"
+            for i, c in enumerate(candidates)
+        )
+        selector_prompt = (
+            f"Given this medical question, which expert role is best suited to answer it?\n\n"
+            f"Question: {question}\n\n"
+            f"Available roles:\n{role_list}\n\n"
+            f"Respond with ONLY the number (1-{len(candidates)}) of the best matching role."
+        )
+
+        try:
+            raw = call_gemini(gemini_client, selector_prompt, None, SELECTOR_MODEL)
+            # Parse the number from response
+            m = re.search(r"(\d+)", raw.strip())
+            if m:
+                idx = int(m.group(1)) - 1
+                if 0 <= idx < len(candidates):
+                    chosen = candidates[idx]
+                    return chosen["prompt_template"], chosen["id"]
+        except Exception as e:
+            print(f"    [selector error: {e}, falling back to embedding top-1]")
+
+        # Fallback to embedding top-1
+        return candidates[0]["prompt_template"], candidates[0]["id"]
+
+    return select
 
 
 # ---------------------------------------------------------------------------
@@ -290,7 +399,7 @@ PROVIDERS = {
 
 FIELDNAMES = [
     "question_id", "condition", "correct_answer",
-    "model_answer", "raw_response", "is_correct",
+    "model_answer", "raw_response", "is_correct", "selected_role",
 ]
 
 
@@ -347,9 +456,16 @@ def run_eval(
         for q in questions:
             prompt = f"{q['question']}\n\n{q['options']}{ANSWER_INSTRUCTION}"
 
-            for cond_name, system_prompt in conditions:
+            for cond_name, system_prompt_or_fn in conditions:
                 if (q["id"], cond_name) in completed:
                     continue
+
+                # Resolve dynamic conditions (embedding/hybrid selectors)
+                selected_role = ""
+                if callable(system_prompt_or_fn):
+                    system_prompt, selected_role = system_prompt_or_fn(q["question"])
+                else:
+                    system_prompt = system_prompt_or_fn
 
                 try:
                     raw = call_fn(client, prompt, system_prompt, model_name)
@@ -369,14 +485,16 @@ def run_eval(
                     "model_answer": model_answer or "PARSE_FAIL",
                     "raw_response": raw[:500],
                     "is_correct": is_correct,
+                    "selected_role": selected_role,
                 })
                 f.flush()
 
                 done += 1
                 status = "correct" if is_correct else "wrong"
+                role_info = f" role={selected_role}" if selected_role else ""
                 print(
                     f"  [{done}/{total_remaining}] Q{q['id']} | {cond_name:16s} | "
-                    f"expected={q['correct_answer']} got={model_answer} ({status})"
+                    f"expected={q['correct_answer']} got={model_answer} ({status}){role_info}"
                 )
 
                 time.sleep(delay)
@@ -392,7 +510,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate role injection on MedQA")
     parser.add_argument(
         "--provider", choices=["claude", "gemini"], default="claude",
-        help="API provider (default: claude)",
+        help="API provider for answering (default: claude)",
     )
     parser.add_argument(
         "--num-questions", type=int, default=200,
@@ -422,6 +540,18 @@ if __name__ == "__main__":
         "--role", default=DEFAULT_ROLE_PATH,
         help="Path to role markdown file (default: roles/medical/cardiologist.md)",
     )
+    parser.add_argument(
+        "--add-embedding", action="store_true",
+        help="Add embedding-only role selection condition (requires ChromaDB)",
+    )
+    parser.add_argument(
+        "--add-hybrid", action="store_true",
+        help="Add hybrid role selection condition (ChromaDB + Gemini Flash picker)",
+    )
+    parser.add_argument(
+        "--db-path", default=os.path.expanduser("~/.role-injector/roledb"),
+        help="ChromaDB path (default: ~/.role-injector/roledb)",
+    )
     args = parser.parse_args()
 
     provider = PROVIDERS[args.provider]
@@ -434,6 +564,25 @@ if __name__ == "__main__":
         sys.exit(1)
 
     conditions = build_conditions(args.role)
+
+    # Add dynamic role selection conditions
+    if args.add_embedding or args.add_hybrid:
+        collection = init_chromadb(args.db_path)
+
+        if args.add_embedding:
+            conditions.append(("embedding_selected", make_embedding_selector(collection)))
+            print("Added condition: embedding_selected (ChromaDB top-1)")
+
+        if args.add_hybrid:
+            gemini_key = os.environ.get("GEMINI_API_KEY")
+            if not gemini_key:
+                print("ERROR: --add-hybrid requires GEMINI_API_KEY for the selector.")
+                print("  export GEMINI_API_KEY='your-key'")
+                sys.exit(1)
+            conditions.append(("hybrid_selected", make_hybrid_selector(collection, gemini_key)))
+            print("Added condition: hybrid_selected (ChromaDB top-5 → Gemini Flash)")
+
+    print(f"\nConditions: {[c[0] for c in conditions]}")
     questions = load_medqa(args.num_questions, args.split, args.filter)
     run_eval(questions, api_key, args.provider, model_name, args.delay, args.output, conditions)
     print("\nDone. Run: python eval/medqa/analyze_medqa.py eval/medqa/results.csv")

@@ -8,11 +8,14 @@ Usage:
 Run this once initially, and again whenever you add new roles.
 """
 
+from __future__ import annotations
+
 import argparse
 import os
 import re
 import json
 from pathlib import Path
+
 
 def parse_role_file(filepath: Path) -> dict | None:
     """Parse a role markdown file into a structured dict."""

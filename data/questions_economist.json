@@ -1,0 +1,272 @@
+[
+  {
+    "id": "finance_economist_1",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What's the difference between demand-pull and cost-push inflation? Can both happen at the same time?"
+  },
+  {
+    "id": "finance_economist_2",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "How does raising interest rates actually bring down inflation? I don't understand the transmission mechanism."
+  },
+  {
+    "id": "finance_economist_3",
+    "domain": "finance",
+    "role": "economist",
+    "type": "advisory",
+    "time_sensitive": true,
+    "turn_type": "single",
+    "question": "What economic indicators should I be watching to tell if a recession is coming in the next 12 months?"
+  },
+  {
+    "id": "finance_economist_4",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What is quantitative easing and how is it different from just printing money? Did the QE programs after 2008 actually work?"
+  },
+  {
+    "id": "finance_economist_5",
+    "domain": "finance",
+    "role": "economist",
+    "type": "advisory",
+    "time_sensitive": true,
+    "turn_type": "single",
+    "question": "The government is running a large budget deficit. At what point does national debt become unsustainable, and what are the warning signs?"
+  },
+  {
+    "id": "finance_economist_6",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "Why does a country's currency appreciate when its central bank raises interest rates? Walk me through the mechanism."
+  },
+  {
+    "id": "finance_economist_7",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "GDP growth looks strong but most people feel worse off economically. Why does GDP sometimes fail to capture real living standards?"
+  },
+  {
+    "id": "finance_economist_8",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What actually causes a currency to collapse, like what happened in Argentina or Turkey? Could that happen to a reserve currency like the US dollar?"
+  },
+  {
+    "id": "finance_economist_9",
+    "domain": "finance",
+    "role": "economist",
+    "type": "advisory",
+    "time_sensitive": true,
+    "turn_type": "single",
+    "question": "There is a lot of talk about deglobalization and new tariffs. What are the real economic costs and benefits of tariffs for the average consumer?"
+  },
+  {
+    "id": "finance_economist_10",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What does it mean when the yield curve inverts, and why do economists treat it as a recession signal?"
+  },
+  {
+    "id": "finance_economist_11",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What does the economic evidence actually say about the employment effects of raising the minimum wage?"
+  },
+  {
+    "id": "finance_economist_12",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What is the Phillips curve and does the relationship between unemployment and inflation still hold today?"
+  },
+  {
+    "id": "finance_economist_13",
+    "domain": "finance",
+    "role": "economist",
+    "type": "advisory",
+    "time_sensitive": true,
+    "turn_type": "single",
+    "question": "China's economy has been slowing down significantly. How would a hard landing in China affect the US and global economies?"
+  },
+  {
+    "id": "finance_economist_14",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What is the difference between CPI and PCE as inflation measures, and why does the Fed prefer PCE?"
+  },
+  {
+    "id": "finance_economist_15",
+    "domain": "finance",
+    "role": "economist",
+    "type": "practical",
+    "time_sensitive": true,
+    "turn_type": "single",
+    "question": "I run a small business. How do interest rate hikes affect my borrowing costs and my customers' spending at the same time?"
+  },
+  {
+    "id": "finance_economist_16",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What is a current account deficit and does it mean a country is living beyond its means?"
+  },
+  {
+    "id": "finance_economist_17",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "How do economists actually forecast recessions? What are the main models used and how reliable are they historically?"
+  },
+  {
+    "id": "finance_economist_18",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What caused the 2008 financial crisis and what prevented a complete economic collapse? What structural changes were made afterward?"
+  },
+  {
+    "id": "finance_economist_19",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What is the core difference between Keynesian and monetarist economic theory, and in what situations does each apply?"
+  },
+  {
+    "id": "finance_economist_20",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "How does immigration affect wages and employment for native workers? What does the empirical research actually show?"
+  },
+  {
+    "id": "finance_economist_21",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What are the main economic arguments for and against a universal basic income?"
+  },
+  {
+    "id": "finance_economist_22",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What is stagflation and why is it so difficult for central banks to fix? Are there historical examples of successfully overcoming it?"
+  },
+  {
+    "id": "finance_economist_23",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "How do supply chain disruptions translate into consumer price inflation? What is the economic transmission channel?"
+  },
+  {
+    "id": "finance_economist_24",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "Why has labor force participation been declining in the US for decades, and what are the long-term economic consequences?"
+  },
+  {
+    "id": "finance_economist_25",
+    "domain": "finance",
+    "role": "economist",
+    "type": "advisory",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What are the economic consequences of an aging population for countries like Japan and Germany, and how should governments prepare?"
+  },
+  {
+    "id": "finance_economist_26",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": true,
+    "turn_type": "single",
+    "question": "What does economic history tell us about technology and employment? Should workers be more worried about AI than past waves of automation?"
+  },
+  {
+    "id": "finance_economist_27",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What is Modern Monetary Theory and what are the main criticisms economists have of it?"
+  },
+  {
+    "id": "finance_economist_28",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "How do economists measure economic inequality, and has it been rising or falling globally over the past few decades?"
+  },
+  {
+    "id": "finance_economist_29",
+    "domain": "finance",
+    "role": "economist",
+    "type": "conceptual",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What is the difference between a soft landing and a hard landing when a central bank tightens monetary policy? How often has the Fed achieved a soft landing?"
+  },
+  {
+    "id": "finance_economist_30",
+    "domain": "finance",
+    "role": "economist",
+    "type": "advisory",
+    "time_sensitive": false,
+    "turn_type": "single",
+    "question": "What are the economic arguments for and against a carbon tax, and how does it compare to cap-and-trade as a climate policy?"
+  }
+]

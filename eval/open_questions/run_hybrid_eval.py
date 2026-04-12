@@ -28,6 +28,8 @@ import os
 import re
 import sys
 import time
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 
@@ -334,8 +336,9 @@ def run_answers(
     answerer_model: str,
     output_path: Path,
     delay: float,
+    workers: int = 10,
 ):
-    """Phase 1: Select roles and collect answers (no judging)."""
+    """Phase 1: Select roles and collect answers (no judging). Runs in parallel."""
     completed, existing_rows = load_completed(output_path)
 
     remaining = [q for q in questions if q["id"] not in completed]
@@ -346,48 +349,65 @@ def run_answers(
     print(f"Condition : hybrid_selected (ChromaDB top-5 → Gemini Flash)")
     print(f"Answerer  : {answerer_model}")
     print(f"Selector  : {SELECTOR_MODEL}")
+    print(f"Workers   : {workers}")
     print(f"Remaining : {len(remaining)} questions\n")
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    counter_lock = threading.Lock()
+    done_count = [0]
+    total = len(remaining)
+
+    def _process_question(q):
+        time.sleep(delay)
+        # 1. Hybrid select: ChromaDB top-5 → Gemini Flash pick
+        system_prompt, selected_role = hybrid_select(
+            collection, gemini_client, q["question"], q["domain"]
+        )
+        # 2. Get answer from GPT-4o mini with selected role as system prompt
+        try:
+            response = call_openai(
+                openai_client, q["question"], system_prompt, answerer_model
+            )
+        except Exception as e:
+            response = f"ANSWER_ERROR: {e}"
+
+        row = {
+            "question_id":   q["id"],
+            "domain":        q["domain"],
+            "role":          q["role"],
+            "question_type": q.get("type", ""),
+            "condition":     "hybrid_selected",
+            "selected_role": selected_role,
+            "question":      q["question"],
+            "response":      response,
+        }
+
+        with counter_lock:
+            done_count[0] += 1
+            match = "✓" if selected_role == q["role"] else "✗"
+            if done_count[0] % 50 == 0 or done_count[0] == total:
+                print(f"  [{done_count[0]}/{total}] last: {q['id'][:40]:40s} | selected={selected_role:30s} {match}")
+
+        return q["id"], row
+
+    # Run in parallel
+    results = {}
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {pool.submit(_process_question, q): q for q in remaining}
+        for future in as_completed(futures):
+            qid, row = future.result()
+            results[qid] = row
+
+    # Write output in original question order
     with open(output_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=FIELDNAMES_ANSWERS)
         writer.writeheader()
         for row in existing_rows:
             writer.writerow(row)
-
-        for i, q in enumerate(remaining, 1):
-            # 1. Hybrid select: ChromaDB top-5 → Gemini Flash pick
-            system_prompt, selected_role = hybrid_select(
-                collection, gemini_client, q["question"], q["domain"]
-            )
-
-            # 2. Get answer from GPT-4o mini with selected role as system prompt
-            try:
-                response = call_openai(
-                    openai_client, q["question"], system_prompt, answerer_model
-                )
-            except Exception as e:
-                response = f"ANSWER_ERROR: {e}"
-
-            writer.writerow({
-                "question_id":   q["id"],
-                "domain":        q["domain"],
-                "role":          q["role"],
-                "question_type": q.get("type", ""),
-                "condition":     "hybrid_selected",
-                "selected_role": selected_role,
-                "question":      q["question"],
-                "response":      response,
-            })
-            f.flush()
-
-            match = "✓" if selected_role == q["role"] else "✗"
-            print(
-                f"  [{i}/{len(remaining)}] {q['id'][:40]:40s} | "
-                f"selected={selected_role:30s} {match}"
-            )
-            time.sleep(delay)
+        for q in remaining:
+            if q["id"] in results:
+                writer.writerow(results[q["id"]])
 
     print(f"\nAnswers saved to {output_path}")
 
@@ -398,8 +418,9 @@ def run_judge(
     judge_model: str,
     output_path: Path,
     delay: float,
+    workers: int = 10,
 ):
-    """Phase 2: Score existing answers with Claude Haiku judge."""
+    """Phase 2: Score existing answers with Claude Haiku judge. Runs in parallel."""
     if not answers_path.exists():
         print(f"ERROR: Answers file not found: {answers_path}")
         sys.exit(1)
@@ -410,51 +431,66 @@ def run_judge(
     print(f"Loaded {len(answer_rows)} answers from {answers_path}")
 
     # Check what's already judged
-    judged_ids = set()
-    existing_judged = []
+    judged_map = {}
     if output_path.exists():
         with open(output_path) as f:
             reader = csv.DictReader(f)
             for row in reader:
-                existing_judged.append(row)
-                judged_ids.add(row["question_id"])
-        print(f"Resuming: {len(judged_ids)} already judged.")
+                judged_map[row["question_id"]] = row
+        print(f"Resuming: {len(judged_map)} already judged.")
 
-    remaining = [r for r in answer_rows if r["question_id"] not in judged_ids]
+    remaining = [r for r in answer_rows if r["question_id"] not in judged_map]
     if not remaining:
         print("All answers already judged.")
         return
 
     print(f"Judge     : {judge_model}")
+    print(f"Workers   : {workers}")
     print(f"Remaining : {len(remaining)} answers to judge\n")
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    counter_lock = threading.Lock()
+    done_count = [len(judged_map)]
+    total = len(answer_rows)
+
+    def _judge_row(row):
+        time.sleep(delay)
+        score, justification = judge_response(
+            claude_client, judge_model,
+            row["domain"], row["role"], row["question"], row["response"],
+        )
+        judged_row = dict(row)
+        judged_row["judge_score"] = score if score is not None else "PARSE_FAIL"
+        judged_row["judge_justification"] = justification
+
+        with counter_lock:
+            done_count[0] += 1
+            if done_count[0] % 50 == 0:
+                print(f"  [{done_count[0]}/{total}] judged")
+
+        return row["question_id"], judged_row
+
+    # Run in parallel
+    results = {}
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {pool.submit(_judge_row, row): row for row in remaining}
+        for future in as_completed(futures):
+            qid, judged_row = future.result()
+            results[qid] = judged_row
+
+    # Write in original order
     with open(output_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=FIELDNAMES_JUDGED)
         writer.writeheader()
-        for row in existing_judged:
-            writer.writerow(row)
+        for row in answer_rows:
+            qid = row["question_id"]
+            if qid in judged_map:
+                writer.writerow(judged_map[qid])
+            elif qid in results:
+                writer.writerow(results[qid])
 
-        for i, row in enumerate(remaining, 1):
-            score, justification = judge_response(
-                claude_client, judge_model,
-                row["domain"], row["role"], row["question"], row["response"],
-            )
-
-            judged_row = dict(row)
-            judged_row["judge_score"] = score if score is not None else "PARSE_FAIL"
-            judged_row["judge_justification"] = justification
-            writer.writerow(judged_row)
-            f.flush()
-
-            score_str = str(score) if score is not None else "?"
-            print(
-                f"  [{i}/{len(remaining)}] {row['question_id'][:40]:40s} | "
-                f"score={score_str}/5 | {justification[:60]}"
-            )
-            time.sleep(delay)
-
+    print(f"  [{done_count[0]}/{total}] judged")
     print(f"\nJudged results saved to {output_path}")
 
 
@@ -475,7 +511,10 @@ if __name__ == "__main__":
     answer_parser.add_argument("--num-questions", type=int, default=300)
     answer_parser.add_argument("--answerer-model", default=DEFAULT_ANSWERER)
     answer_parser.add_argument("--db-path", default=DEFAULT_DB_PATH)
-    answer_parser.add_argument("--delay", type=float, default=0.5)
+    answer_parser.add_argument("--workers", type=int, default=10,
+                               help="Number of parallel workers (default 10)")
+    answer_parser.add_argument("--delay", type=float, default=0.1,
+                               help="Delay per request in seconds (default 0.1)")
 
     # Phase 2: judge answers
     judge_parser = subparsers.add_parser("judge", help="Score answers with Claude Haiku")
@@ -483,7 +522,10 @@ if __name__ == "__main__":
                               help="Path to answers CSV from phase 1")
     judge_parser.add_argument("--output", default="eval/open_questions/hybrid_results_judged.csv")
     judge_parser.add_argument("--judge-model", default=DEFAULT_JUDGE)
-    judge_parser.add_argument("--delay", type=float, default=0.3)
+    judge_parser.add_argument("--workers", type=int, default=10,
+                              help="Number of parallel workers (default 10)")
+    judge_parser.add_argument("--delay", type=float, default=0.1,
+                              help="Delay per request in seconds (default 0.1)")
 
     args = parser.parse_args()
 
@@ -514,6 +556,7 @@ if __name__ == "__main__":
             answerer_model=args.answerer_model,
             output_path=Path(args.output),
             delay=args.delay,
+            workers=args.workers,
         )
 
     elif args.command == "judge":
@@ -530,6 +573,7 @@ if __name__ == "__main__":
             judge_model=args.judge_model,
             output_path=Path(args.output),
             delay=args.delay,
+            workers=args.workers,
         )
 
     print("Done.")

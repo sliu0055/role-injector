@@ -38,7 +38,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 DEFAULT_QUESTIONS = "data/questions_others.json"
-DEFAULT_OUTPUT    = "eval/open_questions/hybrid_results.csv"
+DEFAULT_OUTPUT    = "eval/open_questions/results/hybrid_results.csv"
 DEFAULT_ANSWERER  = "gpt-4o-mini"
 DEFAULT_JUDGE     = "claude-haiku-4-5-20251001"
 SELECTOR_MODEL    = "gemini-2.5-flash"
@@ -520,7 +520,7 @@ if __name__ == "__main__":
     judge_parser = subparsers.add_parser("judge", help="Score answers with Claude Haiku")
     judge_parser.add_argument("--answers", default=DEFAULT_OUTPUT,
                               help="Path to answers CSV from phase 1")
-    judge_parser.add_argument("--output", default="eval/open_questions/hybrid_results_judged.csv")
+    judge_parser.add_argument("--output", default="eval/open_questions/judged/hybrid_results_judged.csv")
     judge_parser.add_argument("--judge-model", default=DEFAULT_JUDGE)
     judge_parser.add_argument("--workers", type=int, default=10,
                               help="Number of parallel workers (default 10)")

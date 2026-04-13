@@ -130,10 +130,10 @@ Reply with ONLY valid JSON — no markdown, no explanation outside the JSON:
 
 # Default 1140q files to judge
 DEFAULT_FILES = [
-    "baseline_1140q.csv",
-    "embedding_1140q.csv",
-    "general_expert_1140q.csv",
-    "hybrid_1140q.csv",
+    "results/baseline_1140q.csv",
+    "results/embedding_1140q.csv",
+    "results/general_expert_1140q.csv",
+    "results/hybrid_1140q.csv",
 ]
 
 DIR = Path(__file__).parent
@@ -216,7 +216,9 @@ def condition_from_filename(name: str) -> str:
 def judge_file(client: anthropic.Anthropic, csv_path: Path, delay: float, workers: int):
     """Judge a single CSV file. Writes results to <name>_judged.csv, resumable."""
 
-    out_path = csv_path.with_name(csv_path.stem + "_judged.csv")
+    judged_dir = DIR / "judged"
+    judged_dir.mkdir(exist_ok=True)
+    out_path = judged_dir / (csv_path.stem + "_judged.csv")
     condition = condition_from_filename(csv_path.name)
 
     # Output fieldnames

@@ -236,7 +236,8 @@ def judge_file(client: anthropic.Anthropic, csv_path: Path, delay: float, worker
         with open(out_path, newline="") as f:
             for row in csv.DictReader(f):
                 qid = row.get("question_id", "")
-                if qid and row.get("accuracy", ""):
+                acc = row.get("accuracy", "")
+                if qid and acc and acc not in ("ERROR", "PARSE_FAIL"):
                     judged[qid] = row
 
     remaining = [r for r in src_rows if r["question_id"] not in judged]

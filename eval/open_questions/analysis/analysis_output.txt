@@ -1,0 +1,244 @@
+
+================================================================================
+OVERALL SUMMARY
+================================================================================
+Questions: 1140
+Conditions: baseline, embedding, general_expert, hybrid
+
+Condition               accuracy  expertise_   relevance      safety     clarity  time_sensi   avg_score
+--------------------------------------------------------------------------------------------------------
+baseline                   4.054       3.638       4.749       4.693       4.896       3.952       4.390
+embedding                  3.986       3.896       4.725       4.780       4.514       3.922       4.349
+general_expert             4.052       3.823       4.728       4.626       4.716       3.957       4.373
+hybrid                     4.005       3.923       4.780       4.809       4.550       3.911       4.382
+
+================================================================================
+STATISTICAL TESTS (on avg_score)
+================================================================================
+Valid paired observations: 1140/1140
+
+Friedman chi-square = 31.3023, p = 7.34e-07
+Result: SIGNIFICANT (alpha=0.05)
+
+Pairwise Wilcoxon Signed-Rank Tests (Bonferroni threshold: 0.0083)
+Pair                                         W-stat      p-value        p-adj   Sig?  Mean diff
+--------------------------------------------------------------------------------------------
+baseline vs embedding                      154104.5     0.000929     0.005577    YES    +0.0411
+baseline vs general_expert                 123904.0     0.019765     0.118592     no    +0.0179
+baseline vs hybrid                         176901.0     0.468209     1.000000     no    +0.0087
+embedding vs general_expert                167143.5     0.443432     1.000000     no    -0.0233
+embedding vs hybrid                         98910.0     0.000797     0.004782    YES    -0.0325
+general_expert vs hybrid                   156098.0     0.145532     0.873193     no    -0.0092
+
+================================================================================
+PER-METRIC FRIEDMAN TESTS
+================================================================================
+
+accuracy: chi2=48.65, p=1.55e-10 ***
+  baseline=4.054  embeddin=3.986  general_=4.052  hybrid=4.005
+    baseline vs embedding: p_adj=0.0000, diff=+0.068
+    baseline vs hybrid: p_adj=0.0005, diff=+0.048
+    embedding vs general_expert: p_adj=0.0000, diff=-0.066
+    general_expert vs hybrid: p_adj=0.0008, diff=+0.046
+
+expertise_depth: chi2=488.99, p=1.16e-105 ***
+  baseline=3.638  embeddin=3.896  general_=3.823  hybrid=3.923
+    baseline vs embedding: p_adj=0.0000, diff=-0.258
+    baseline vs general_expert: p_adj=0.0000, diff=-0.185
+    baseline vs hybrid: p_adj=0.0000, diff=-0.285
+    embedding vs general_expert: p_adj=0.0000, diff=+0.073
+    general_expert vs hybrid: p_adj=0.0000, diff=-0.100
+
+relevance: chi2=15.11, p=1.73e-03 **
+  baseline=4.749  embeddin=4.725  general_=4.728  hybrid=4.780
+    embedding vs hybrid: p_adj=0.0037, diff=-0.054
+    general_expert vs hybrid: p_adj=0.0040, diff=-0.052
+
+safety: chi2=194.61, p=6.15e-42 ***
+  baseline=4.690  embeddin=4.778  general_=4.622  hybrid=4.806
+    baseline vs embedding: p_adj=0.0000, diff=-0.088
+    baseline vs general_expert: p_adj=0.0001, diff=+0.068
+    baseline vs hybrid: p_adj=0.0000, diff=-0.116
+    embedding vs general_expert: p_adj=0.0000, diff=+0.156
+    general_expert vs hybrid: p_adj=0.0000, diff=-0.184
+
+clarity: chi2=580.98, p=1.34e-125 ***
+  baseline=4.896  embeddin=4.514  general_=4.716  hybrid=4.550
+    baseline vs embedding: p_adj=0.0000, diff=+0.382
+    baseline vs general_expert: p_adj=0.0000, diff=+0.181
+    baseline vs hybrid: p_adj=0.0000, diff=+0.346
+    embedding vs general_expert: p_adj=0.0000, diff=-0.202
+    general_expert vs hybrid: p_adj=0.0000, diff=+0.166
+
+time_sensitive_correctness: chi2=6.32, p=9.69e-02 
+  baseline=3.916  embeddin=3.862  general_=3.916  hybrid=3.826
+
+================================================================================
+BY-DOMAIN BREAKDOWN (avg_score)
+================================================================================
+Domain              N      baseline     embedding  general_expe        hybrid    Best
+-------------------------------------------------------------------------------------
+finance           150       4.364 *       4.299         4.262         4.288  
+legal             120       4.254 *       4.083         4.152         4.128  
+medical           510       4.394         4.409         4.437         4.457 *
+psychology        150       4.389         4.431         4.416         4.445 *
+science           150       4.541 *       4.416         4.476         4.434  
+technology         60       4.323 *       4.130         4.171         4.200  
+
+================================================================================
+WIN / LOSS / TIE ANALYSIS (avg_score, pairwise)
+================================================================================
+Pair                                       A wins   B wins      Tie
+--------------------------------------------------------------------
+baseline vs embedding                      500 (43.9%)   342 (30.0%)   298 (26.1%)
+baseline vs general_expert                 415 (36.4%)   326 (28.6%)   399 (35.0%)
+baseline vs hybrid                         473 (41.5%)   380 (33.3%)   287 (25.2%)
+embedding vs general_expert                390 (34.2%)   440 (38.6%)   310 (27.2%)
+embedding vs hybrid                        320 (28.1%)   361 (31.7%)   459 (40.3%)
+general_expert vs hybrid                   410 (36.0%)   404 (35.4%)   326 (28.6%)
+
+================================================================================
+RESPONSE TEXT SIMILARITY (SequenceMatcher, sample=200)
+================================================================================
+Pair                                         Mean   Median     <0.3  0.3-0.7     >0.7
+--------------------------------------------------------------------------------
+baseline vs embedding                       0.090    0.086   100.0%     0.0%     0.0%
+baseline vs general_expert                  0.122    0.111    99.5%     0.5%     0.0%
+baseline vs hybrid                          0.091    0.082   100.0%     0.0%     0.0%
+embedding vs general_expert                 0.084    0.076   100.0%     0.0%     0.0%
+embedding vs hybrid                         0.098    0.091   100.0%     0.0%     0.0%
+general_expert vs hybrid                    0.086    0.077    99.5%     0.5%     0.0%
+
+Interpretation: <0.3 = very different, 0.3-0.7 = somewhat similar, >0.7 = highly similar
+
+==========================================================================================
+BY-DOMAIN STATISTICAL TESTS (avg_score)
+==========================================================================================
+
+FINANCE (n=150): Friedman chi2=22.51, p=0.0001 ***
+  Means: baseline=4.364  embeddin=4.299  general_=4.262  hybrid=4.288
+  Best: baseline
+    baseline vs general_expert: p_adj=0.0000, diff=+0.103
+    baseline vs hybrid: p_adj=0.0142, diff=+0.077
+
+LEGAL (n=120): Friedman chi2=13.46, p=0.0037 **
+  Means: baseline=4.254  embeddin=4.083  general_=4.152  hybrid=4.128
+  Best: baseline
+    baseline vs embedding: p_adj=0.0005, diff=+0.172
+    baseline vs general_expert: p_adj=0.0098, diff=+0.103
+    baseline vs hybrid: p_adj=0.0399, diff=+0.127
+
+MEDICAL (n=510): Friedman chi2=7.84, p=0.0494 *
+  Means: baseline=4.394  embeddin=4.409  general_=4.437  hybrid=4.457
+  Best: hybrid
+    baseline vs general_expert: p_adj=0.0139, diff=-0.043
+    baseline vs hybrid: p_adj=0.0000, diff=-0.062
+    embedding vs hybrid: p_adj=0.0064, diff=-0.048
+
+PSYCHOLOGY (n=150): Friedman chi2=7.08, p=0.0694 
+  Means: baseline=4.389  embeddin=4.431  general_=4.416  hybrid=4.445
+  Best: hybrid
+
+SCIENCE (n=150): Friedman chi2=61.56, p=0.0000 ***
+  Means: baseline=4.541  embeddin=4.416  general_=4.476  hybrid=4.434
+  Best: baseline
+    baseline vs embedding: p_adj=0.0000, diff=+0.124
+    baseline vs general_expert: p_adj=0.0056, diff=+0.064
+    baseline vs hybrid: p_adj=0.0000, diff=+0.106
+    embedding vs general_expert: p_adj=0.0362, diff=-0.060
+
+TECHNOLOGY (n=60): Friedman chi2=26.84, p=0.0000 ***
+  Means: baseline=4.323  embeddin=4.130  general_=4.171  hybrid=4.200
+  Best: baseline
+    baseline vs embedding: p_adj=0.0011, diff=+0.193
+    baseline vs general_expert: p_adj=0.0040, diff=+0.152
+
+==========================================================================================
+EFFECT SIZES — avg_score (Cohen's d, paired)
+==========================================================================================
+Pair                                        Cohen d    Magnitude
+-----------------------------------------------------------------
+baseline vs embedding                       +0.1127   negligible
+baseline vs general_expert                  +0.0583   negligible
+baseline vs hybrid                          +0.0264   negligible
+embedding vs general_expert                 -0.0648   negligible
+embedding vs hybrid                         -0.1078   negligible
+general_expert vs hybrid                    -0.0296   negligible
+
+EFFECT SIZES — expertise_depth (Cohen's d, paired)
+-----------------------------------------------------------------
+baseline vs embedding                       -0.4707        small
+baseline vs general_expert                  -0.3722        small
+baseline vs hybrid                          -0.5395       medium
+embedding vs general_expert                 +0.1625   negligible
+embedding vs hybrid                         -0.0770   negligible
+general_expert vs hybrid                    -0.2384        small
+
+==========================================================================================
+SCORE DISTRIBUTION (avg_score)
+==========================================================================================
+baseline              mean=4.390  std=0.302  min=2.80  Q1=4.20  med=4.40  Q3=4.60  max=4.83
+embedding             mean=4.349  std=0.348  min=1.00  Q1=4.20  med=4.40  Q3=4.60  max=5.00
+general_expert        mean=4.373  std=0.298  min=2.83  Q1=4.20  med=4.40  Q3=4.60  max=4.83
+hybrid                mean=4.382  std=0.300  min=2.83  Q1=4.25  med=4.40  Q3=4.60  max=4.83
+
+====================================================================================================
+TOP 10 QUESTIONS WHERE HYBRID >> BASELINE
+====================================================================================================
+  diff=+1.60  BL_exp=2 HY_exp=4  medical_pediatrician_20             My 12-year-old daughter started her period but hasn't grown much in height. My pediatrician is worri
+  diff=+1.60  BL_exp=1 HY_exp=4  psychology_trauma-therapist_5       I was sexually assaulted two years ago. I feel shame and blame myself. How does trauma therapy addre
+  diff=+1.47  BL_exp=2 HY_exp=4  medical_pediatrician_1              My 3-month-old has a fever of 38.5°C. Should I take them to the ER or can I manage this at home?
+  diff=+1.30  BL_exp=2 HY_exp=4  medical_doctor_2                    My blood test showed my eGFR is 55 and my doctor said my kidneys are not working at 100%. How worrie
+  diff=+1.20  BL_exp=2 HY_exp=4  science_epidemiologist_6            What is herd immunity and how is the herd immunity threshold calculated for a given pathogen?
+  diff=+1.20  BL_exp=2 HY_exp=4  medical_psychiatrist_16             I'm having thoughts of hurting myself but haven't done anything. What should I do and what constitut
+  diff=+1.20  BL_exp=2 HY_exp=4  medical_rheumatologist_13           My rheumatoid arthritis is in remission on a biologic. My rheumatologist wants to taper the medicati
+  diff=+1.17  BL_exp=2 HY_exp=4  medical_pediatrician_7              My baby has been diagnosed with jaundice. The bilirubin is 12. When does newborn jaundice require ph
+  diff=+0.90  BL_exp=2 HY_exp=4  medical_hematologist-oncologist_19  I have antiphospholipid syndrome. My rheumatologist and hematologist have slightly different opinion
+  diff=+0.90  BL_exp=3 HY_exp=4  legal_hkiac-arbitration-specialist_ What grounds exist to challenge and set aside an HKIAC arbitral award in Hong Kong courts?
+
+====================================================================================================
+TOP 10 QUESTIONS WHERE BASELINE >> HYBRID
+====================================================================================================
+  diff=-1.10  BL_clr=5 HY_clr=4  legal_hkiac-arbitration-specialist_ What is the seat of arbitration and how does it affect the legal framework governing an HKIAC procee
+  diff=-1.10  BL_clr=5 HY_clr=4  legal_hkiac-arbitration-specialist_ What is the kompetenz-kompetenz principle in arbitration and why does it matter for jurisdiction cha
+  diff=-1.10  BL_clr=5 HY_clr=4  legal_hkiac-arbitration-specialist_ What is an anti-suit injunction and how can Hong Kong courts assist HKIAC arbitration with one?
+  diff=-1.17  BL_clr=5 HY_clr=4  finance_tax-accountant_25           I have a net operating loss from my business this year. Can I use it to offset other income or carry
+  diff=-1.17  BL_clr=5 HY_clr=4  finance_tax-accountant_17           I have a side business in addition to my full-time job. How do I report this income and what deducti
+  diff=-1.20  BL_clr=5 HY_clr=4  medical_infectious-disease-speciali I've developed a circular bull's-eye rash after hiking in the woods last week. Could this be Lyme di
+  diff=-1.33  BL_clr=5 HY_clr=4  finance_tax-accountant_21           How does gift tax work and how much can I give to my children each year without triggering taxes?
+  diff=-1.40  BL_clr=5 HY_clr=4  legal_patent-attorney_9             What is a freedom-to-operate analysis and why should I get one before launching a new product?
+  diff=-1.40  BL_clr=5 HY_clr=4  legal_patent-attorney_22            I'm a pharmaceutical company. What patent strategies are used to extend exclusivity on a drug beyond
+  diff=-1.43  BL_clr=5 HY_clr=4  legal_hkiac-arbitration-specialist_ We received a notice of arbitration from a counterparty. What steps do we need to take and what are 
+
+====================================================================================================
+BY QUESTION TYPE (avg_score)
+====================================================================================================
+Type                N      baseline     embedding  general_expe        hybrid  Best
+-------------------------------------------------------------------------------------
+advisory          850         4.376         4.367         4.387         4.403  hybrid
+conceptual        284         4.435         4.297         4.330         4.319  baseline
+practical           6         4.339         4.367         4.333         4.283  embedding
+
+====================================================================================================
+EXPERTISE_DEPTH BY DOMAIN
+====================================================================================================
+Domain              N      baseline     embedding  general_expe        hybrid            Best     vs BL
+-----------------------------------------------------------------------------------------------
+finance           150         3.727         3.907         3.847         3.900       embedding    +0.180
+legal             120         3.592         3.650         3.692         3.675  general_expert    +0.100
+medical           510         3.551         3.925         3.827         3.975          hybrid    +0.424
+psychology        150         3.627         3.953         3.813         3.947       embedding    +0.327
+science           150         3.920         3.973         3.967         4.000          hybrid    +0.080
+technology         60         3.567         3.767         3.650         3.783          hybrid    +0.217
+
+====================================================================================================
+CLARITY BY DOMAIN
+====================================================================================================
+Domain              N      baseline     embedding  general_expe        hybrid            Best     vs BL
+-----------------------------------------------------------------------------------------------
+finance           150         4.960         4.540         4.580         4.440        baseline    +0.000
+legal             120         4.825         4.375         4.567         4.450        baseline    +0.000
+medical           510         4.904         4.563         4.843         4.639        baseline    +0.000
+psychology        150         4.973         4.753         4.900         4.760        baseline    +0.000
+science           150         4.900         4.380         4.593         4.420        baseline    +0.000
+technology         60         4.617         4.050         4.117         4.067        baseline    +0.000

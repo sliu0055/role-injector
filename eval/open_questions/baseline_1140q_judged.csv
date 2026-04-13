@@ -17052,7 +17052,7 @@ The decision between hemodialysis and peritoneal dialysis often depends on sever
 - **Support System**: Availability of family or friends to assist you if you choose peritoneal dialysis, as it often requires help for both setup and monitoring.
 - **Health Status**: Those with certain conditions may be more suitable for one type over the other; for example, if you have cardiovascular issues, hemodialysis might be preferred.
 
-It's best to discuss these factors with your healthcare team, who can help guide you in making a choice that aligns with your medical needs and lifestyle preferences.",ERROR,ERROR,ERROR,ERROR,ERROR,ERROR,0.0,ERROR
+It's best to discuss these factors with your healthcare team, who can help guide you in making a choice that aligns with your medical needs and lifestyle preferences.",4,4,5,5,5,N/A,4.6,"Well-structured, accurate, and comprehensive comparison that appropriately directs the patient toward professional consultation while covering the essential differences and decision-making factors."
 medical_nephrologist_10,baseline,I've been told some of my medications are nephrotoxic. How does my nephrologist adjust dosing and which medications should I avoid entirely?,"Nephrotoxic medications are those that can cause damage to the kidneys, and if you have been informed that some of your medications fall into this category, it's important to have a thorough discussion with your nephrologist. Here are some general ways nephrologists adjust dosing and strategies to manage nephrotoxic medications:
 
 ### Adjusting Dosing
@@ -20422,7 +20422,7 @@ science_physicist_14,baseline,How does nuclear fusion work and what makes it so 
 
 6. **Long Development Timeline**: While there have been significant advancements (e.g., ITER and other research initiatives), practical fusion power is still likely years or even decades away from commercialization.
 
-In summary, while nuclear fusion holds the promise of a nearly limitless, clean energy source, the technical and economic challenges it presents make it a formidable task to realize its potential for practical energy generation. Researchers continue to explore various physical principles and engineering solutions to overcome these obstacles.",ERROR,ERROR,ERROR,ERROR,ERROR,ERROR,0.0,ERROR
+In summary, while nuclear fusion holds the promise of a nearly limitless, clean energy source, the technical and economic challenges it presents make it a formidable task to realize its potential for practical energy generation. Researchers continue to explore various physical principles and engineering solutions to overcome these obstacles.",4,4,5,5,5,4,4.5,"A well-structured, accurate explanation of fusion physics and practical challenges; mentions ITER and recent progress appropriately, with only minor gaps in technical depth (e.g., Q-factor terminology, recent NIF breakthrough context)."
 science_physicist_21,baseline,What is the photoelectric effect and why was Einstein awarded the Nobel Prize for explaining it?,"The photoelectric effect is a phenomenon in which electrons are emitted from a material, typically a metal, when it is exposed to light or electromagnetic radiation of sufficient energy. This effect was observed as early as the 19th century, but it posed significant challenges to classical physics, which struggled to explain why light could cause electrons to be ejected from a material.
 
 The key points of the photoelectric effect are:

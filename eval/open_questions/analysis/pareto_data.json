@@ -1,0 +1,146 @@
+[
+  {
+    "domain": "finance",
+    "condition": "baseline",
+    "expertise_depth": 3.727,
+    "clarity": 4.96
+  },
+  {
+    "domain": "finance",
+    "condition": "embedding",
+    "expertise_depth": 3.907,
+    "clarity": 4.54
+  },
+  {
+    "domain": "finance",
+    "condition": "general_expert",
+    "expertise_depth": 3.847,
+    "clarity": 4.58
+  },
+  {
+    "domain": "finance",
+    "condition": "hybrid",
+    "expertise_depth": 3.9,
+    "clarity": 4.44
+  },
+  {
+    "domain": "legal",
+    "condition": "baseline",
+    "expertise_depth": 3.592,
+    "clarity": 4.825
+  },
+  {
+    "domain": "legal",
+    "condition": "embedding",
+    "expertise_depth": 3.65,
+    "clarity": 4.375
+  },
+  {
+    "domain": "legal",
+    "condition": "general_expert",
+    "expertise_depth": 3.692,
+    "clarity": 4.567
+  },
+  {
+    "domain": "legal",
+    "condition": "hybrid",
+    "expertise_depth": 3.675,
+    "clarity": 4.45
+  },
+  {
+    "domain": "medical",
+    "condition": "baseline",
+    "expertise_depth": 3.551,
+    "clarity": 4.904
+  },
+  {
+    "domain": "medical",
+    "condition": "embedding",
+    "expertise_depth": 3.925,
+    "clarity": 4.563
+  },
+  {
+    "domain": "medical",
+    "condition": "general_expert",
+    "expertise_depth": 3.827,
+    "clarity": 4.843
+  },
+  {
+    "domain": "medical",
+    "condition": "hybrid",
+    "expertise_depth": 3.975,
+    "clarity": 4.639
+  },
+  {
+    "domain": "psychology",
+    "condition": "baseline",
+    "expertise_depth": 3.627,
+    "clarity": 4.973
+  },
+  {
+    "domain": "psychology",
+    "condition": "embedding",
+    "expertise_depth": 3.953,
+    "clarity": 4.753
+  },
+  {
+    "domain": "psychology",
+    "condition": "general_expert",
+    "expertise_depth": 3.813,
+    "clarity": 4.9
+  },
+  {
+    "domain": "psychology",
+    "condition": "hybrid",
+    "expertise_depth": 3.947,
+    "clarity": 4.76
+  },
+  {
+    "domain": "science",
+    "condition": "baseline",
+    "expertise_depth": 3.92,
+    "clarity": 4.9
+  },
+  {
+    "domain": "science",
+    "condition": "embedding",
+    "expertise_depth": 3.973,
+    "clarity": 4.38
+  },
+  {
+    "domain": "science",
+    "condition": "general_expert",
+    "expertise_depth": 3.967,
+    "clarity": 4.593
+  },
+  {
+    "domain": "science",
+    "condition": "hybrid",
+    "expertise_depth": 4.0,
+    "clarity": 4.42
+  },
+  {
+    "domain": "technology",
+    "condition": "baseline",
+    "expertise_depth": 3.567,
+    "clarity": 4.617
+  },
+  {
+    "domain": "technology",
+    "condition": "embedding",
+    "expertise_depth": 3.767,
+    "clarity": 4.05
+  },
+  {
+    "domain": "technology",
+    "condition": "general_expert",
+    "expertise_depth": 3.65,
+    "clarity": 4.117
+  },
+  {
+    "domain": "technology",
+    "condition": "hybrid",
+    "expertise_depth": 3.783,
+    "clarity": 4.067
+  }
+]

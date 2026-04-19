@@ -242,3 +242,77 @@ medical           510         4.904         4.563         4.843         4.639   
 psychology        150         4.973         4.753         4.900         4.760        baseline    +0.000
 science           150         4.900         4.380         4.593         4.420        baseline    +0.000
 technology         60         4.617         4.050         4.117         4.067        baseline    +0.000
+
+==========================================================================================
+RESPONSE LENGTH ANALYSIS
+==========================================================================================
+
+Condition              Mean len     Median        Std      Min      Max
+----------------------------------------------------------------------
+baseline                   2361       2377        841      144     4337
+embedding                  3047       3056        781      430     4659
+general_expert             2520       2678        638      155     3627
+hybrid                     3095       3130        782      360     4611
+
+--- Correlation: response length vs avg_score (Spearman) ---
+baseline              rho=+0.081  p=6.30e-03
+embedding             rho=-0.230  p=4.00e-15
+general_expert        rho=-0.290  p=1.58e-23
+hybrid                rho=-0.291  p=1.19e-23
+
+--- Length-normalized avg_score (residualized) ---
+Condition              Raw mean    Norm mean     Diff
+-------------------------------------------------------
+baseline                  4.390        4.373   -0.018
+embedding                 4.349        4.362   +0.013
+general_expert            4.373        4.362   -0.011
+hybrid                    4.382        4.397   +0.015
+
+--- Response length by domain ---
+Domain             baseline   embedding  general_ex      hybrid
+-----------------------------------------------------------------
+finance                2965        3691        2915        3717
+legal                  2771        3526        2872        3596
+medical                1830        2506        2121        2515
+psychology             2399        3105        2736        3172
+science                2750        3389        2750        3569
+technology             3483        4071        3100        4094
+
+==========================================================================================
+RETRIEVAL PRECISION ANALYSIS
+==========================================================================================
+Total questions: 1140
+Exact role match: 978 (85.8%)
+Generic fallback: 32 (2.8%)
+Different role selected: 130 (11.4%)
+
+--- Performance by retrieval outcome ---
+Category                       N     Mean      Std
+--------------------------------------------------
+Exact match                  978    4.374    0.303
+Different role               130    4.416    0.279
+Generic fallback              32    4.481    0.273
+
+Mann-Whitney U (match vs different): U=58388, p=0.1257
+
+--- Retrieval precision by domain ---
+Domain              N    Exact     Diff  Generic   Match%
+-------------------------------------------------------
+finance           150      136        9        5    90.7%
+legal             120      115        4        1    95.8%
+medical           510      412       91        7    80.8%
+psychology        150      129       20        1    86.0%
+science           150      133        3       14    88.7%
+technology         60       53        3        4    88.3%
+
+--- Most common mismatches (top 10) ---
+    5x  doctor -> infectious-disease-specialist
+    4x  cognitive-behavioral-therapist -> clinical-psychologist
+    4x  doctor -> emergency-medicine-physician
+    4x  doctor -> endocrinologist
+    4x  doctor -> gastroenterologist
+    3x  addiction-counselor -> psychiatrist
+    3x  cardiologist -> emergency-medicine-physician
+    3x  clinical-psychologist -> cognitive-behavioral-therapist
+    3x  clinical-psychologist -> psychiatrist
+    3x  corporate-attorney -> investment-banker

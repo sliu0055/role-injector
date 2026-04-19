@@ -491,6 +491,140 @@ def print_by_question_type(data: dict, common: list[str]):
 
 
 # ---------------------------------------------------------------------------
+# Response length confound
+# ---------------------------------------------------------------------------
+
+def print_response_length(data: dict, common: list[str]):
+    print("\n" + "=" * 90)
+    print("RESPONSE LENGTH ANALYSIS")
+    print("=" * 90)
+
+    print(f"\n{'Condition':20s} {'Mean len':>10s} {'Median':>10s} {'Std':>10s} {'Min':>8s} {'Max':>8s}")
+    print("-" * 70)
+
+    lengths = {}
+    for c in CONDITIONS:
+        lens = [len(data[c][q].get("response", "")) for q in common]
+        lengths[c] = np.array(lens)
+        print(f"{c:20s} {np.mean(lens):10.0f} {np.median(lens):10.0f} {np.std(lens):10.0f} {np.min(lens):8d} {np.max(lens):8d}")
+
+    # Correlation: response length vs avg_score
+    print(f"\n--- Correlation: response length vs avg_score (Spearman) ---")
+    for c in CONDITIONS:
+        scores = np.array([float(data[c][q]["avg_score"]) for q in common])
+        r, p = stats.spearmanr(lengths[c], scores)
+        print(f"{c:20s}  rho={r:+.3f}  p={p:.2e}")
+
+    # Length-normalized scores
+    print(f"\n--- Length-normalized avg_score (residualized) ---")
+    print(f"{'Condition':20s} {'Raw mean':>10s} {'Norm mean':>12s} {'Diff':>8s}")
+    print("-" * 55)
+
+    all_lens = np.concatenate([lengths[c] for c in CONDITIONS])
+    all_scores = np.concatenate([np.array([float(data[c][q]["avg_score"]) for q in common]) for c in CONDITIONS])
+    slope, intercept, _, _, _ = stats.linregress(all_lens, all_scores)
+
+    for c in CONDITIONS:
+        scores = np.array([float(data[c][q]["avg_score"]) for q in common])
+        predicted = slope * lengths[c] + intercept
+        residuals = scores - predicted
+        norm_mean = np.mean(residuals) + np.mean(all_scores)
+        raw_mean = np.mean(scores)
+        print(f"{c:20s} {raw_mean:10.3f} {norm_mean:12.3f} {norm_mean - raw_mean:+8.3f}")
+
+    # By domain
+    print(f"\n--- Response length by domain ---")
+    domains = sorted(set(get_domain(q) for q in common))
+    print(f"{'Domain':15s}" + "".join(f"{c[:10]:>12s}" for c in CONDITIONS))
+    print("-" * 65)
+    for domain in domains:
+        dom_ids = [q for q in common if get_domain(q) == domain]
+        row = f"{domain:15s}"
+        for c in CONDITIONS:
+            lens = [len(data[c][q].get("response", "")) for q in dom_ids]
+            row += f"{np.mean(lens):12.0f}"
+        print(row)
+
+
+# ---------------------------------------------------------------------------
+# Retrieval precision
+# ---------------------------------------------------------------------------
+
+def print_retrieval_precision(data: dict, common: list[str]):
+    print("\n" + "=" * 90)
+    print("RETRIEVAL PRECISION ANALYSIS")
+    print("=" * 90)
+
+    # Load hybrid results with selected_role
+    hybrid_results_file = EVAL_DIR / "results" / "hybrid_1140q.csv"
+    if not hybrid_results_file.exists():
+        print("hybrid_1140q.csv not found — skipping retrieval precision.")
+        return
+
+    with open(hybrid_results_file, newline="") as f:
+        hybrid_rows = list(csv.DictReader(f))
+
+    total = len(hybrid_rows)
+    exact_match = sum(1 for r in hybrid_rows if r.get("selected_role", "") == r.get("role", ""))
+    generic = sum(1 for r in hybrid_rows if r.get("selected_role", "").startswith("generic-"))
+
+    print(f"Total questions: {total}")
+    print(f"Exact role match: {exact_match} ({exact_match / total * 100:.1f}%)")
+    print(f"Generic fallback: {generic} ({generic / total * 100:.1f}%)")
+    print(f"Different role selected: {total - exact_match - generic} ({(total - exact_match - generic) / total * 100:.1f}%)")
+
+    # Performance by retrieval outcome
+    match_scores, mismatch_scores, generic_scores = [], [], []
+    for r in hybrid_rows:
+        qid = r["question_id"]
+        if qid not in data["hybrid"]:
+            continue
+        score = float(data["hybrid"][qid]["avg_score"])
+        if r.get("selected_role", "").startswith("generic-"):
+            generic_scores.append(score)
+        elif r.get("selected_role", "") == r.get("role", ""):
+            match_scores.append(score)
+        else:
+            mismatch_scores.append(score)
+
+    print(f"\n--- Performance by retrieval outcome ---")
+    print(f"{'Category':25s} {'N':>6s} {'Mean':>8s} {'Std':>8s}")
+    print("-" * 50)
+    print(f"{'Exact match':25s} {len(match_scores):6d} {np.mean(match_scores):8.3f} {np.std(match_scores):8.3f}")
+    print(f"{'Different role':25s} {len(mismatch_scores):6d} {np.mean(mismatch_scores):8.3f} {np.std(mismatch_scores):8.3f}")
+    print(f"{'Generic fallback':25s} {len(generic_scores):6d} {np.mean(generic_scores):8.3f} {np.std(generic_scores):8.3f}")
+
+    if mismatch_scores:
+        from scipy.stats import mannwhitneyu
+        u, p = mannwhitneyu(match_scores, mismatch_scores)
+        print(f"\nMann-Whitney U (match vs different): U={u:.0f}, p={p:.4f}")
+
+    # By domain
+    print(f"\n--- Retrieval precision by domain ---")
+    domains = sorted(set(get_domain(r["question_id"]) for r in hybrid_rows))
+    print(f"{'Domain':15s} {'N':>5s} {'Exact':>8s} {'Diff':>8s} {'Generic':>8s} {'Match%':>8s}")
+    print("-" * 55)
+    for domain in domains:
+        dom = [r for r in hybrid_rows if get_domain(r["question_id"]) == domain]
+        n = len(dom)
+        ex = sum(1 for r in dom if r.get("selected_role", "") == r.get("role", ""))
+        gen = sum(1 for r in dom if r.get("selected_role", "").startswith("generic-"))
+        diff = n - ex - gen
+        print(f"{domain:15s} {n:5d} {ex:8d} {diff:8d} {gen:8d} {ex / n * 100:7.1f}%")
+
+    # Most common mismatches
+    print(f"\n--- Most common mismatches (top 10) ---")
+    mismatches = {}
+    for r in hybrid_rows:
+        if r.get("selected_role", "") != r.get("role", "") and not r.get("selected_role", "").startswith("generic-"):
+            key = f"{r['role']} -> {r['selected_role']}"
+            mismatches[key] = mismatches.get(key, 0) + 1
+
+    for k, v in sorted(mismatches.items(), key=lambda x: -x[1])[:10]:
+        print(f"  {v:3d}x  {k}")
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -505,12 +639,15 @@ def main():
     parser.add_argument("--effect-sizes", action="store_true", help="Cohen's d effect sizes")
     parser.add_argument("--extremes", action="store_true", help="Questions with largest score differences")
     parser.add_argument("--by-type", action="store_true", help="Breakdown by question type")
+    parser.add_argument("--length", action="store_true", help="Response length confound analysis")
+    parser.add_argument("--retrieval", action="store_true", help="Retrieval precision analysis")
     args = parser.parse_args()
 
     run_all = args.all
     run_default = not any([args.by_domain, args.by_metric, args.similarity,
                            args.win_loss, args.domain_stats, args.effect_sizes,
-                           args.extremes, args.by_type, args.all])
+                           args.extremes, args.by_type, args.length, args.retrieval,
+                           args.all])
 
     data = load_data()
     common = get_common_ids(data)
@@ -546,6 +683,12 @@ def main():
 
     if run_all or args.by_metric:
         print_metric_by_domain(data, common)
+
+    if run_all or args.length:
+        print_response_length(data, common)
+
+    if run_all or args.retrieval:
+        print_retrieval_precision(data, common)
 
 
 if __name__ == "__main__":
